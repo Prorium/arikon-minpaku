@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有村昆の民泊塾 | 民泊収益シミュレーター</title>
+    <meta name="description" content="民泊投資の収益性を簡単にシミュレーション。LINE Bot連携で結果通知。">
+    <meta name="keywords" content="民泊,投資,シミュレーター,収益,LINE Bot,有村昆">
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Recharts CDN -->
+    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* カスタムスタイル */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .selected {
+            border: 3px solid #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+        }
+        
+        .feature-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .line-section {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+        }
+        
+        .benefit-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .capacity-info {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        function App() {
+            const [currentStep, setCurrentStep] = React.useState(0);
+            const [formData, setFormData] = React.useState({
+                region: '',
+                propertyType: '',
+                rent: 100000,
+                initialCost: 1000000,
+                furniture: false,
+                renovationCost: 0,
+                managementFee: 10,
+                capacity: 2 // 宿泊可能人数を追加
+            });
+            
+            // 間取り別の宿泊可能人数を算出する関数
+            const calculateCapacity = (propertyType) => {
+                const capacityMap = {
+                    '1K': { basic: 2, max: 3, area: '20-25㎡' },
+                    '1DK': { basic: 3, max: 4, area: '25-30㎡' },
+                    '1LDK': { basic: 4, max: 5, area: '35-45㎡' },
+                    '2LDK': { basic: 5, max: 6, area: '50-65㎡' },
+                    '3LDK': { basic: 6, max: 8, area: '65-80㎡' },
+                    '戸建て': { basic: 8, max: 10, area: '80㎡以上' }
+                };
+                return capacityMap[propertyType] || { basic: 2, max: 3, area: '20-25㎡' };
+            };
+            
+            const regions = [
+                { name: '東京都', description: '活気ある首都', occupancy: 70, price: 8000 },
+                { name: '大阪府', description: '関西の中心地', occupancy: 68, price: 6500 },
+                { name: '京都府', description: '歴史的な観光地', occupancy: 65, price: 7000 },
+                { name: '福岡県', description: '九州の玄関口', occupancy: 60, price: 5500 },
+                { name: '沖縄県', description: 'リゾート地', occupancy: 62, price: 6000 },
+                { name: '北海道', description: '自然豊かな観光地', occupancy: 55, price: 5000 },
+                { name: 'その他地方', description: '地方都市', occupancy: 40, price: 4000 }
+            ];
+            
+            const propertyTypes = [
+                { type: '1K', description: '最大2名まで', icon: '🏠' },
+                { type: '1DK', description: '最大2名まで', icon: '🏠' },
+                { type: '1LDK', description: '最大3名まで', icon: '🏡' },
+                { type: '2LDK', description: '最大4名まで', icon: '🏡' },
+                { type: '3LDK', description: '最大6名まで', icon: '🏘️' },
+                { type: '戸建て', description: '最大8名まで', icon: '🏘️' }
+            ];
+            
+            const calculateResults = () => {
+                const selectedRegion = regions.find(r => r.name === formData.region);
+                const capacityInfo = calculateCapacity(formData.propertyType);
+                const capacity = capacityInfo.basic; // 基本宿泊人数を使用
+                
+                // 年間売上計算（宿泊可能人数を考慮）
+                const dailyRevenue = selectedRegion.price * capacity;
+                const annualRevenue = dailyRevenue * 365 * (selectedRegion.occupancy / 100);
+                
+                // 年間費用計算
+                const monthlyRent = formData.rent;
+                const annualRent = monthlyRent * 12;
+                const utilities = 15000 * 12; // 月額光熱費
+                const insurance = 16000 * 12; // 月額保険料
+                const managementCost = annualRevenue * (formData.managementFee / 100);
+                const annualCosts = annualRent + utilities + insurance + managementCost;
+                
+                // 年間利益
+                const annualProfit = annualRevenue - annualCosts;
+                
+                // 初期投資額
+                const totalInitialCost = formData.initialCost + (formData.furniture ? 500000 : 0) + formData.renovationCost;
+                
+                // 年間利回り
+                const annualYield = (annualProfit / totalInitialCost) * 100;
+                
+                // 投資回収期間
+                const paybackPeriod = totalInitialCost / annualProfit;
+                
+                return {
+                    annualRevenue: Math.round(annualRevenue),
+                    annualCosts: Math.round(annualCosts),
+                    annualProfit: Math.round(annualProfit),
+                    annualYield: Math.round(annualYield * 10) / 10,
+                    paybackPeriod: Math.round(paybackPeriod * 10) / 10,
+                    totalInitialCost,
+                    capacity,
+                    capacityInfo,
+                    dailyRevenue: Math.round(dailyRevenue),
+                    monthlyRevenue: Math.round(annualRevenue / 12),
+                    monthlyProfit: Math.round(annualProfit / 12)
+                };
+            };
+            
+            const nextStep = () => {
+                if (currentStep < 5) {
+                    setCurrentStep(currentStep + 1);
+                }
+            };
+            
+            const prevStep = () => {
+                if (currentStep > 0) {
+                    setCurrentStep(currentStep - 1);
+                }
+            };
+            
+            const selectRegion = (region) => {
+                setFormData({...formData, region: region});
+            };
+            
+            const selectPropertyType = (type) => {
+                const capacityInfo = calculateCapacity(type);
+                setFormData({
+                    ...formData, 
+                    propertyType: type,
+                    capacity: capacityInfo.basic
+                });
+            };
+            
+            const renderLandingPage = () => (
+                <div className="min-h-screen gradient-bg flex flex-col items-center justify-center text-white px-4">
+                    <div className="text-center max-w-4xl mx-auto">
+                        <div className="mb-8">
+                            <img src="data_mark.png" alt="有村昆の民泊塾" className="w-24 h-24 mx-auto mb-6" />
+                        </div>
+                        
+                        <h1 className="text-5xl md:text-6xl font-bold mb-4">
+                            3分で分かる！<br />
+                            あなたの民泊投資収益
+                        </h1>
+                        
+                        <p className="text-xl mb-8 opacity-90">
+                            あなたの民泊投資にすべて答える
+                        </p>
+                        
+                        <button 
+                            onClick={() => setCurrentStep(1)}
+                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg text-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+                        >
+                            シミュレーションを始める
+                        </button>
+                        
+                        <div className="grid md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto">
+                            <div className="text-center p-6 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                                <div className="feature-icon w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    ⚡
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">ゲーム感覚の算出</h3>
+                                <p className="opacity-80">楽しくシミュレーション</p>
+                            </div>
+                            
+                            <div className="text-center p-6 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                                <div className="feature-icon w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    📊
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">簡単な入力</h3>
+                                <p className="opacity-80">必要なデータにサポート</p>
+                            </div>
+                            
+                            <div className="text-center p-6 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                                <div className="feature-icon w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                                    📈
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">詳細な分析</h3>
+                                <p className="opacity-80">収益性の詳細分析</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+            const renderRegionSelection = () => (
+                <div className="min-h-screen bg-gray-50 py-8 px-4">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-4">地域を選択</h2>
+                            <div className="flex items-center justify-center mb-6">
+                                <span className="text-sm text-gray-600 mr-4">Step 1 of 5</span>
+                                <div className="w-64 bg-gray-200 rounded-full h-2">
+                                    <div className="progress-bar h-2 rounded-full" style={{width: '20%'}}></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="grid md:grid-cols-3 gap-6 mb-8">
+                            {regions.map((region, index) => (
+                                <div 
+                                    key={index}
+                                    onClick={() => selectRegion(region.name)}
+                                    className={`p-6 bg-white rounded-lg shadow-md cursor-pointer card-hover ${formData.region === region.name ? 'selected' : ''}`}
+                                >
+                                    <div className="flex items-center mb-3">
+                                        <span className="text-red-500 text-xl mr-2">📍</span>
+                                        <h3 className="font-bold text-lg">{region.name}</h3>
+                                    </div>
+                                    <p className="text-gray-600 mb-3">{region.description}</p>
+                                    <div className="space-y-1 text-sm">
+                                        <div className="flex justify-between">
+                                            <span>平均稼働率</span>
+                                            <span className="font-bold">{region.occupancy}%</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>平均単価</span>
+                                            <span className="font-bold">¥{region.price.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="flex justify-between">
+                            <button 
+                                onClick={prevStep}
+                                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg"
+                            >
+                                戻る
+                            </button>
+                            <button 
+                                onClick={nextStep}
+                                disabled={!formData.region}
+                                className={`font-bold py-2 px-6 rounded-lg ${formData.region ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                            >
+                                次へ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+            const renderPropertyTypeSelection = () => (
+                <div className="min-h-screen bg-gray-50 py-8 px-4">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-4">物件タイプを選択</h2>
+                            <div className="flex items-center justify-center mb-6">
+                                <span className="text-sm text-gray-600 mr-4">Step 2 of 5</span>
+                                <div className="w-64 bg-gray-200 rounded-full h-2">
+                                    <div className="progress-bar h-2 rounded-full" style={{width: '40%'}}></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="grid md:grid-cols-3 gap-6 mb-8">
+                            {propertyTypes.map((property, index) => {
+                                const capacityInfo = calculateCapacity(property.type);
+                                return (
+                                    <div 
+                                        key={index}
+                                        onClick={() => selectPropertyType(property.type)}
+                                        className={`p-6 bg-white rounded-lg shadow-md cursor-pointer card-hover ${formData.propertyType === property.type ? 'selected' : ''}`}
+                                    >
+                                        <div className="text-center">
+                                            <div className="text-4xl mb-3">{property.icon}</div>
+                                            <h3 className="font-bold text-xl mb-2">{property.type}</h3>
+                                            <div className="flex items-center justify-center mb-2">
+                                                <span className="text-blue-500 text-sm mr-1">👥</span>
+                                                <span className="text-sm text-gray-600">{property.description}</span>
+                                            </div>
+                                            {formData.propertyType === property.type && (
+                                                <div className="capacity-info text-xs">
+                                                    <div className="font-semibold text-blue-700 mb-1">宿泊可能人数詳細</div>
+                                                    <div>基本: {capacityInfo.basic}名</div>
+                                                    <div>最大: {capacityInfo.max}名</div>
+                                                    <div>面積: {capacityInfo.area}</div>
+                                                    <div className="text-gray-600 mt-1">
+                                                        ※2段ベッド・ソファベッド活用時
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        <div className="flex justify-between">
+                            <button 
+                                onClick={prevStep}
+                                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg"
+                            >
+                                戻る
+                            </button>
+                            <button 
+                                onClick={nextStep}
+                                disabled={!formData.propertyType}
+                                className={`font-bold py-2 px-6 rounded-lg ${formData.propertyType ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                            >
+                                次へ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+            const renderRentInput = () => (
+                <div className="min-h-screen bg-gray-50 py-8 px-4">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-4">家賃・初期費用</h2>
+                            <div className="flex items-center justify-center mb-6">
+                                <span className="text-sm text-gray-600 mr-4">Step 3 of 5</span>
+                                <div className="w-64 bg-gray-200 rounded-full h-2">
+                                    <div className="progress-bar h-2 rounded-full" style={{width: '60%'}}></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-8">
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <h3 className="text-xl font-bold mb-4">月額家賃</h3>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    月額家賃 (円)
+                                </label>
+                                <input 
+                                    type="range" 
+                                    min="50000" 
+                                    max="200000" 
+                                    step="10000"
+                                    value={formData.rent}
+                                    onChange={(e) => setFormData({...formData, rent: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-4"
+                                />
+                                <input 
+                                    type="number" 
+                                    value={formData.rent}
+                                    onChange={(e) => setFormData({...formData, rent: parseInt(e.target.value)})}
+                                    className="w-full p-3 border border-gray-300 rounded-lg text-center text-xl font-bold bg-yellow-50"
+                                />
+                            </div>
+                            
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <h3 className="text-xl font-bold mb-4">初期費用</h3>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    初期費用（敷金・礼金・仲介手数料等）(円)
+                                </label>
+                                <input 
+                                    type="range" 
+                                    min="500000" 
+                                    max="3000000" 
+                                    step="100000"
+                                    value={formData.initialCost}
+                                    onChange={(e) => setFormData({...formData, initialCost: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-4"
+                                />
+                                <input 
+                                    type="number" 
+                                    value={formData.initialCost}
+                                    onChange={(e) => setFormData({...formData, initialCost: parseInt(e.target.value)})}
+                                    className="w-full p-3 border border-gray-300 rounded-lg text-center text-xl font-bold bg-pink-50"
+                                />
+                                <p className="text-sm text-gray-600 mt-2">
+                                    ※敷金・礼金・仲介手数料・その他初期費用の合計を入力してください
+                                </p>
+                            </div>
+                            
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <h3 className="text-xl font-bold mb-4">参考：月額費用</h3>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span>月額清掃費</span>
+                                        <span>¥15,000</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>光熱費・保険料等</span>
+                                        <span>¥16,000</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-between mt-8">
+                            <button 
+                                onClick={prevStep}
+                                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg"
+                            >
+                                戻る
+                            </button>
+                            <button 
+                                onClick={nextStep}
+                                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg"
+                            >
+                                次へ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+            const renderOptionsInput = () => (
+                <div className="min-h-screen bg-gray-50 py-8 px-4">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-4">追加オプション</h2>
+                            <div className="flex items-center justify-center mb-6">
+                                <span className="text-sm text-gray-600 mr-4">Step 4 of 5</span>
+                                <div className="w-64 bg-gray-200 rounded-full h-2">
+                                    <div className="progress-bar h-2 rounded-full" style={{width: '80%'}}></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-6">
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <h3 className="text-xl font-bold mb-4">家具・家電</h3>
+                                <label className="flex items-center cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={formData.furniture}
+                                        onChange={(e) => setFormData({...formData, furniture: e.target.checked})}
+                                        className="mr-3 w-5 h-5"
+                                    />
+                                    <span className="text-lg">家具・家電を購入する (¥500,000)</span>
+                                </label>
+                            </div>
+                            
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <h3 className="text-xl font-bold mb-4">リフォーム費用</h3>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    リフォーム費用 (円)
+                                </label>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="1000000" 
+                                    step="50000"
+                                    value={formData.renovationCost}
+                                    onChange={(e) => setFormData({...formData, renovationCost: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-4"
+                                />
+                                <input 
+                                    type="number" 
+                                    value={formData.renovationCost}
+                                    onChange={(e) => setFormData({...formData, renovationCost: parseInt(e.target.value)})}
+                                    className="w-full p-3 border border-gray-300 rounded-lg text-center text-xl font-bold bg-cyan-50"
+                                />
+                            </div>
+                            
+                            <div className="bg-white p-6 rounded-lg shadow-md">
+                                <h3 className="text-xl font-bold mb-4">運営代行費</h3>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    売上に対する運営代行費 (%)
+                                </label>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="30" 
+                                    step="1"
+                                    value={formData.managementFee}
+                                    onChange={(e) => setFormData({...formData, managementFee: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-4"
+                                />
+                                <input 
+                                    type="number" 
+                                    value={formData.managementFee}
+                                    onChange={(e) => setFormData({...formData, managementFee: parseInt(e.target.value)})}
+                                    className="w-full p-3 border border-gray-300 rounded-lg text-center text-xl font-bold bg-orange-50"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-between mt-8">
+                            <button 
+                                onClick={prevStep}
+                                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg"
+                            >
+                                戻る
+                            </button>
+                            <button 
+                                onClick={nextStep}
+                                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg"
+                            >
+                                結果を計算
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+            const renderResults = () => {
+                const results = calculateResults();
+                
+                return (
+                    <div className="min-h-screen bg-gray-50 py-8 px-4">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="text-center mb-8">
+                                <h2 className="text-3xl font-bold text-gray-800 mb-4">シミュレーション結果</h2>
+                                <div className="flex items-center justify-center mb-6">
+                                    <span className="text-sm text-gray-600 mr-4">Step 5 of 5</span>
+                                    <div className="w-64 bg-gray-200 rounded-full h-2">
+                                        <div className="progress-bar h-2 rounded-full" style={{width: '100%'}}></div>
+                                    </div>
+                                </div>
+                                <p className="text-gray-600">あなたの民泊投資の収益予測です</p>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-4 gap-6 mb-8">
+                                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                                    <h3 className="text-lg font-bold text-gray-700 mb-2">年間売上</h3>
+                                    <p className="text-3xl font-bold text-blue-600">¥{results.annualRevenue.toLocaleString()}</p>
+                                </div>
+                                
+                                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                                    <h3 className="text-lg font-bold text-gray-700 mb-2">年間支払い</h3>
+                                    <p className="text-3xl font-bold text-red-600">¥{results.annualCosts.toLocaleString()}</p>
+                                </div>
+                                
+                                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                                    <h3 className="text-lg font-bold text-gray-700 mb-2">年間利益</h3>
+                                    <p className="text-3xl font-bold text-green-600">¥{results.annualProfit.toLocaleString()}</p>
+                                </div>
+                                
+                                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                                    <h3 className="text-lg font-bold text-gray-700 mb-2">年間利回り</h3>
+                                    <p className="text-3xl font-bold text-purple-600">{results.annualYield}%</p>
+                                </div>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-8 mb-8">
+                                <div className="bg-white p-6 rounded-lg shadow-md">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center">
+                                        <span className="text-blue-500 mr-2">📊</span>
+                                        基本情報
+                                    </h3>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span>地域:</span>
+                                            <span className="font-bold">{formData.region}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>物件タイプ:</span>
+                                            <span className="font-bold">{formData.propertyType}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>宿泊可能人数:</span>
+                                            <span className="font-bold text-blue-600">{results.capacity}名</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>月額家賃:</span>
+                                            <span className="font-bold">¥{formData.rent.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>初期費用:</span>
+                                            <span className="font-bold">¥{formData.initialCost.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>1日売上:</span>
+                                            <span className="font-bold">¥{results.dailyRevenue.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>月間売上:</span>
+                                            <span className="font-bold">¥{results.monthlyRevenue.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>月間利益:</span>
+                                            <span className="font-bold">¥{results.monthlyProfit.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-white p-6 rounded-lg shadow-md">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center">
+                                        <span className="text-orange-500 mr-2">💰</span>
+                                        投資指標
+                                    </h3>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span>投資回収期間:</span>
+                                            <span className="font-bold">{results.paybackPeriod}年</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>総初期費用:</span>
+                                            <span className="font-bold">¥{results.totalInitialCost.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>稼働率:</span>
+                                            <span className="font-bold">{regions.find(r => r.name === formData.region)?.occupancy}%</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>平均単価:</span>
+                                            <span className="font-bold">¥{regions.find(r => r.name === formData.region)?.price.toLocaleString()}/日</span>
+                                        </div>
+                                        <div className="capacity-info">
+                                            <div className="font-semibold text-blue-700 mb-1">宿泊可能人数詳細</div>
+                                            <div>基本: {results.capacityInfo.basic}名</div>
+                                            <div>最大: {results.capacityInfo.max}名</div>
+                                            <div>面積: {results.capacityInfo.area}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* 公式LINEセクション */}
+                            <div className="line-section text-white p-8 rounded-lg shadow-lg mb-8">
+                                <div className="text-center">
+                                    <h3 className="text-2xl font-bold mb-4 flex items-center justify-center">
+                                        <span className="mr-2">📱</span>
+                                        結果は公式LINEより受け取れます
+                                    </h3>
+                                    <p className="mb-6 opacity-90">
+                                        より詳細な分析結果とプロの投資アドバイスを<br />
+                                        公式LINEで無料配信中！
+                                    </p>
+                                    
+                                    <button 
+                                        onClick={() => window.open('https://line.me/R/ti/p/@your-line-id', '_blank')}
+                                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 shadow-lg mb-6"
+                                    >
+                                        🔗 公式LINEに登録する
+                                    </button>
+                                    
+                                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                        <div className="benefit-card p-4 rounded-lg">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-yellow-300 mr-2">💡</span>
+                                                <span className="font-bold">基本収益情報</span>
+                                            </div>
+                                            <p>年間売上・支払い・利益・利回り・投資回収期間</p>
+                                        </div>
+                                        
+                                        <div className="benefit-card p-4 rounded-lg">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-pink-300 mr-2">✅</span>
+                                                <span className="font-bold">月別収益推移</span>
+                                            </div>
+                                            <p>売上・支払い・利益の月別詳細推移</p>
+                                        </div>
+                                        
+                                        <div className="benefit-card p-4 rounded-lg">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-blue-300 mr-2">📊</span>
+                                                <span className="font-bold">地域比較分析</span>
+                                            </div>
+                                            <p>他地域との収益性・稼働率比較</p>
+                                        </div>
+                                        
+                                        <div className="benefit-card p-4 rounded-lg">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-green-300 mr-2">🔍</span>
+                                                <span className="font-bold">リスク分析</span>
+                                            </div>
+                                            <p>投資リスクの詳細分析と対策</p>
+                                        </div>
+                                        
+                                        <div className="benefit-card p-4 rounded-lg">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-purple-300 mr-2">💼</span>
+                                                <span className="font-bold">実績事例</span>
+                                            </div>
+                                            <p>実際の投資事例と成功事例の紹介</p>
+                                        </div>
+                                        
+                                        <div className="benefit-card p-4 rounded-lg">
+                                            <div className="flex items-center mb-2">
+                                                <span className="text-orange-300 mr-2">🎯</span>
+                                                <span className="font-bold">最適運営対策案内</span>
+                                            </div>
+                                            <p>LINE登録で50%OFFキャンペーン実施中</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <p className="text-sm opacity-80 mt-4">
+                                        ※登録料は無料です。友だち追加後、自動で詳細な分析結果をお送りします。
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-6">
+                                <p className="text-sm text-yellow-800">
+                                    <strong>免責事項：</strong> このシミュレーション結果は参考値であり、実際の投資収益を保証するものではありません。投資判断は自己責任で行ってください。
+                                </p>
+                            </div>
+                            
+                            <div className="text-center">
+                                <button 
+                                    onClick={() => setCurrentStep(0)}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg"
+                                >
+                                    新しいシミュレーション
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+            
+            const renderStep = () => {
+                switch (currentStep) {
+                    case 0: return renderLandingPage();
+                    case 1: return renderRegionSelection();
+                    case 2: return renderPropertyTypeSelection();
+                    case 3: return renderRentInput();
+                    case 4: return renderOptionsInput();
+                    case 5: return renderResults();
+                    default: return renderLandingPage();
+                }
+            };
+            
+            return (
+                <div className="min-h-screen">
+                    {renderStep()}
+                    
+                    {/* フッター */}
+                    <footer className="bg-gray-800 text-white py-8">
+                        <div className="max-w-4xl mx-auto px-4 text-center">
+                            <div className="mb-4">
+                                <img src="data_mark.png" alt="ロゴ" className="w-12 h-12 mx-auto mb-2" />
+                            </div>
+                            <p className="mb-2">運営会社：株式会社Prorium</p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
+
