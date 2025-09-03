@@ -24,7 +24,7 @@
     <style>
         /* カスタムスタイル */
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100% );
         }
         
         .card-hover {
@@ -64,7 +64,7 @@
         const { useState, useEffect } = React;
         const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } = Recharts;
         
-        function App() {
+        function App( ) {
             const [currentStep, setCurrentStep] = useState(0);
             const [formData, setFormData] = useState({
                 region: '',
@@ -158,7 +158,8 @@
                                 有村昆の民泊塾
                             </h1>
                             <h2 className="text-2xl md:text-4xl font-semibold mb-6">
-                                3分で分かる！<br />あなたの民泊投資収益
+                                3分で分かる！  
+あなたの民泊投資収益
                             </h2>
                             <p className="text-xl mb-8 opacity-90">
                                 あなたの民泊投資にすべて答える
@@ -462,7 +463,8 @@
                                         <strong>LINE Botで「結果」と送信すると、最新のシミュレーション結果が届きます！</strong>
                                     </p>
                                     <p className="text-sm text-green-600">
-                                        LINE Developer ConsoleでWebhook URLを設定してください：<br/>
+                                        LINE Developer ConsoleでWebhook URLを設定してください：  
+
                                         <code className="bg-white px-2 py-1 rounded">{CONFIG.API_BASE_URL}/api/line/webhook</code>
                                     </p>
                                 </div>
@@ -526,4 +528,3 @@
     </script>
 </body>
 </html>
-
