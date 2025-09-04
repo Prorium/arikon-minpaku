@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有村昆の民泊塾 - 民泊シミュレーター</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'ヒラギノ角ゴシック', 'Yu Gothic', 'メイリオ', sans-serif;
+            background-color: #ffffff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            max-width: 300px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #d2691e;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px 10px 10px;
+            font-weight: bold;
+            color: white;
+            background-color: #ccc;
+        }
+
+        .step.active {
+            background-color: #ff6b35;
+        }
+
+        .step.completed {
+            background-color: #28a745;
+        }
+
+        .step-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .step-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .region-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .region-card {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .region-card:hover {
+            border-color: #ff6b35;
+            transform: translateY(-2px);
+        }
+
+        .region-card.selected {
+            border-color: #28a745;
+            background-color: #f8fff8;
+        }
+
+        .region-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .region-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .property-card {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .property-card:hover {
+            border-color: #ff6b35;
+        }
+
+        .property-card.selected {
+            border-color: #28a745;
+            background-color: #f8fff8;
+        }
+
+        .area-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .area-option {
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .area-option:hover {
+            border-color: #ff6b35;
+        }
+
+        .area-option.selected {
+            border-color: #28a745;
+            background-color: #f8fff8;
+        }
+
+        .law-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .law-option {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .law-option:hover {
+            border-color: #ff6b35;
+        }
+
+        .law-option.selected {
+            border-color: #e91e63;
+            background-color: #fce4ec;
+        }
+
+        .capacity-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .capacity-option {
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 15px 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .capacity-option:hover {
+            border-color: #ff6b35;
+        }
+
+        .capacity-option.selected {
+            border-color: #28a745;
+            background-color: #f8fff8;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+
+        .form-input.auto-filled {
+            background-color: #f0f8f0;
+            border-color: #28a745;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-primary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+            font-size: 18px;
+            padding: 15px 40px;
+        }
+
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+
+        .summary-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .completion-message {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .completion-title {
+            font-size: 32px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .completion-text {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        .line-button {
+            background-color: #00c300;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .line-button:hover {
+            background-color: #009900;
+        }
+
+        .operation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .operation-card {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .operation-card:hover {
+            border-color: #ff6b35;
+        }
+
+        .operation-card.selected {
+            border-color: #28a745;
+            background-color: #f8fff8;
+        }
+
+        .operation-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .operation-description {
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .step-indicator {
+                flex-wrap: wrap;
+            }
+            
+            .step {
+                margin: 5px;
+            }
+            
+            .region-grid,
+            .property-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .area-options,
+            .capacity-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // 設定データ
+        const CONFIG = {
+            BACKEND_URL: 'https://arikon-minpaku.onrender.com',
+            LINE_URL: 'https://lin.ee/VzUHQsm'
+        };
+
+        // 地域データ
+        const REGIONS = {
+            tokyo: { name: '東京都', avgPrice: 8000, occupancy: 75, description: '観光・ビジネス需要が高い' },
+            osaka: { name: '大阪府', avgPrice: 6500, occupancy: 70, description: '関西の中心地、観光地多数' },
+            kyoto: { name: '京都府', avgPrice: 7000, occupancy: 80, description: '世界的観光地、外国人に人気' },
+            kanagawa: { name: '神奈川県', avgPrice: 7500, occupancy: 65, description: '東京近郊、アクセス良好' },
+            aichi: { name: '愛知県', avgPrice: 5500, occupancy: 60, description: '中部地方の中心、ビジネス需要' },
+            fukuoka: { name: '福岡県', avgPrice: 5000, occupancy: 65, description: 'アジアの玄関口、成長市場' }
+        };
+
+        // 物件タイプデータ
+        const PROPERTY_TYPES = {
+            '1R': { name: '1R', capacity: '1-2名', areas: [15, 18, 20, 22, 25] },
+            '1K': { name: '1K', capacity: '1-2名', areas: [20, 22, 25, 28, 30] },
+            '1DK': { name: '1DK', capacity: '2-3名', areas: [25, 28, 30, 32, 35] },
+            '1LDK': { name: '1LDK', capacity: '2-4名', areas: [35, 40, 45, 50, 55] },
+            '2K': { name: '2K', capacity: '3-4名', areas: [35, 40, 45, 50, 55] },
+            '2DK': { name: '2DK', capacity: '3-5名', areas: [45, 50, 55, 60, 65] },
+            '2LDK': { name: '2LDK', capacity: '4-6名', areas: [55, 60, 65, 70, 75] },
+            '3LDK': { name: '3LDK', capacity: '5-8名', areas: [70, 75, 80, 85, 90] }
+        };
+
+        // 民泊法データ
+        const MINPAKU_LAWS = {
+            newlaw: { name: '民泊新法対応', limit: '180日制限あり', description: '年間営業日数180日まで' },
+            ryokan: { name: '旅館業法', limit: '制限なし', description: '年間営業日数制限なし' },
+            tokku: { name: '特区民泊', limit: '制限なし', description: '年間営業日数制限なし' }
+        };
+
+        function MinpakuSimulator() {
+            const [currentStep, setCurrentStep] = useState(1);
+            const [formData, setFormData] = useState({
+                region: '',
+                operationType: '', // 'rental' or 'purchase'
+                propertyType: '',
+                area: '',
+                customArea: '',
+                minpakuLaw: '',
+                capacity: '',
+                monthlyRent: '',
+                purchasePrice: '',
+                renovationCost: '',
+                deposit: '',
+                keyMoney: '',
+                brokerFee: '',
+                vacantRent: '',
+                insurance: '',
+                guarantee: '',
+                otherCosts: ''
+            });
+
+            const totalSteps = formData.operationType === 'rental' ? 7 : 6;
+
+            // 初期費用自動計算
+            useEffect(() => {
+                if (formData.monthlyRent && formData.operationType === 'rental') {
+                    const rent = parseInt(formData.monthlyRent) || 0;
+                    setFormData(prev => ({
+                        ...prev,
+                        deposit: (rent * 2).toString(),
+                        keyMoney: rent.toString(),
+                        brokerFee: rent.toString(),
+                        vacantRent: rent.toString(),
+                        insurance: '20000',
+                        guarantee: Math.floor(rent * 0.5).toString(),
+                        otherCosts: '50000'
+                    }));
+                }
+            }, [formData.monthlyRent, formData.operationType]);
+
+            const handleNext = () => {
+                if (currentStep < totalSteps) {
+                    setCurrentStep(currentStep + 1);
+                }
+            };
+
+            const handlePrev = () => {
+                if (currentStep > 1) {
+                    setCurrentStep(currentStep - 1);
+                }
+            };
+
+            const handleSubmit = async () => {
+                try {
+                    // シミュレーション結果をローカルストレージに保存
+                    const simulationResult = calculateResults();
+                    localStorage.setItem('minpakuSimulationResult', JSON.stringify({
+                        ...formData,
+                        ...simulationResult,
+                        timestamp: new Date().toISOString()
+                    }));
+
+                    // バックエンドにも送信
+                    const response = await fetch(`${CONFIG.BACKEND_URL}/api/simulation/save`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            userId: 'user_' + Date.now(),
+                            data: formData,
+                            result: simulationResult
+                        })
+                    });
+
+                    setCurrentStep(totalSteps + 1);
+                } catch (error) {
+                    console.error('シミュレーション保存エラー:', error);
+                    setCurrentStep(totalSteps + 1);
+                }
+            };
+
+            const calculateResults = () => {
+                const region = REGIONS[formData.region];
+                const monthlyRevenue = (region?.avgPrice || 0) * (parseInt(formData.capacity) || 1) * 30 * (region?.occupancy || 0) / 100;
+                
+                let monthlyExpenses = 0;
+                let initialCost = 0;
+                let totalInvestment = 0;
+
+                if (formData.operationType === 'rental') {
+                    monthlyExpenses = parseInt(formData.monthlyRent || 0);
+                    initialCost = parseInt(formData.deposit || 0) + 
+                                 parseInt(formData.keyMoney || 0) + 
+                                 parseInt(formData.brokerFee || 0) + 
+                                 parseInt(formData.vacantRent || 0) + 
+                                 parseInt(formData.insurance || 0) + 
+                                 parseInt(formData.guarantee || 0) + 
+                                 parseInt(formData.otherCosts || 0);
+                    totalInvestment = initialCost + parseInt(formData.renovationCost || 0);
+                } else {
+                    monthlyExpenses = 50000; // 管理費等
+                    totalInvestment = parseInt(formData.purchasePrice || 0) + parseInt(formData.renovationCost || 0);
+                }
+
+                const monthlyProfit = monthlyRevenue - monthlyExpenses;
+                const annualProfit = monthlyProfit * 12;
+                const roi = totalInvestment > 0 ? (annualProfit / totalInvestment * 100) : 0;
+                const paybackPeriod = monthlyProfit > 0 ? totalInvestment / monthlyProfit : 0;
+
+                return {
+                    monthlyRevenue: Math.round(monthlyRevenue),
+                    monthlyExpenses: Math.round(monthlyExpenses),
+                    monthlyProfit: Math.round(monthlyProfit),
+                    annualProfit: Math.round(annualProfit),
+                    totalInvestment: Math.round(totalInvestment),
+                    roi: Math.round(roi * 100) / 100,
+                    paybackPeriod: Math.round(paybackPeriod * 10) / 10
+                };
+            };
+
+            const isStepValid = () => {
+                switch (currentStep) {
+                    case 1: return formData.region;
+                    case 2: return formData.operationType;
+                    case 3: return formData.propertyType && (formData.area || formData.customArea) && formData.minpakuLaw;
+                    case 4: return formData.capacity;
+                    case 5: 
+                        if (formData.operationType === 'rental') {
+                            return formData.monthlyRent && formData.renovationCost;
+                        } else {
+                            return formData.purchasePrice && formData.renovationCost;
+                        }
+                    case 6: 
+                        if (formData.operationType === 'rental') {
+                            return true; // 初期費用は自動入力されるため
+                        } else {
+                            return true; // 購入の場合は確認画面
+                        }
+                    case 7: return true; // 確認画面
+                    default: return false;
+                }
+            };
+
+            // LINE Bot結果表示機能
+            window.showLineBotResult = () => {
+                const savedResult = localStorage.getItem('minpakuSimulationResult');
+                if (savedResult) {
+                    const result = JSON.parse(savedResult);
+                    const message = `
+🏠 民泊シミュレーション結果
+
+📍 地域: ${REGIONS[result.region]?.name}
+🏢 運営形態: ${result.operationType === 'rental' ? '転貸' : '購入'}
+🏠 物件: ${result.propertyType} (${result.area || result.customArea}㎡)
+👥 収容人数: ${result.capacity}名
+⚖️ 民泊法: ${MINPAKU_LAWS[result.minpakuLaw]?.name}
+
+💰 収益予測:
+・月間売上: ${result.monthlyRevenue?.toLocaleString()}円
+・月間経費: ${result.monthlyExpenses?.toLocaleString()}円
+・月間利益: ${result.monthlyProfit?.toLocaleString()}円
+・年間利益: ${result.annualProfit?.toLocaleString()}円
+
+📊 投資指標:
+・総投資額: ${result.totalInvestment?.toLocaleString()}円
+・ROI: ${result.roi}%
+・投資回収期間: ${result.paybackPeriod}ヶ月
+
+※ この結果は概算です。実際の収益は市場状況により変動します。
+                    `;
+                    alert(message);
+                    return message;
+                } else {
+                    alert('シミュレーション結果が見つかりません。まずシミュレーションを実行してください。');
+                    return null;
+                }
+            };
+
+            const renderStep = () => {
+                switch (currentStep) {
+                    case 1:
+                        return renderStep1();
+                    case 2:
+                        return renderStep2();
+                    case 3:
+                        return renderStep3();
+                    case 4:
+                        return renderStep4();
+                    case 5:
+                        return renderStep5();
+                    case 6:
+                        return formData.operationType === 'rental' ? renderStep6() : renderStep7();
+                    case 7:
+                        return renderStep7();
+                    case totalSteps + 1:
+                        return renderCompletion();
+                    default:
+                        return null;
+                }
+            };
+
+            const renderStep1 = () => (
+                <div className="step-content">
+                    <h2 className="step-title">地域を選択してください</h2>
+                    <div className="region-grid">
+                        {Object.entries(REGIONS).map(([key, region]) => (
+                            <div
+                                key={key}
+                                className={`region-card ${formData.region === key ? 'selected' : ''}`}
+                                onClick={() => setFormData({...formData, region: key})}
+                            >
+                                <div className="region-name">{region.name}</div>
+                                <div className="region-info">平均単価: {region.avgPrice}円/泊</div>
+                                <div className="region-info">稼働率: {region.occupancy}%</div>
+                                <div className="region-info">{region.description}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            const renderStep2 = () => (
+                <div className="step-content">
+                    <h2 className="step-title">運営形態を選択してください</h2>
+                    <div className="operation-grid">
+                        <div
+                            className={`operation-card ${formData.operationType === 'rental' ? 'selected' : ''}`}
+                            onClick={() => setFormData({...formData, operationType: 'rental'})}
+                        >
+                            <div className="operation-title">転貸（賃貸物件で民泊運営）</div>
+                            <div className="operation-description">
+                                賃貸物件を借りて民泊運営を行います。初期投資を抑えて始められます。
+                            </div>
+                        </div>
+                        <div
+                            className={`operation-card ${formData.operationType === 'purchase' ? 'selected' : ''}`}
+                            onClick={() => setFormData({...formData, operationType: 'purchase'})}
+                        >
+                            <div className="operation-title">購入（物件購入して民泊運営）</div>
+                            <div className="operation-description">
+                                物件を購入して民泊運営を行います。長期的な資産形成が可能です。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderStep3 = () => (
+                <div className="step-content">
+                    <h2 className="step-title">物件情報を入力してください</h2>
+                    
+                    <h3>物件タイプ</h3>
+                    <div className="property-grid">
+                        {Object.entries(PROPERTY_TYPES).map(([key, type]) => (
+                            <div
+                                key={key}
+                                className={`property-card ${formData.propertyType === key ? 'selected' : ''}`}
+                                onClick={() => setFormData({...formData, propertyType: key, area: ''})}
+                            >
+                                <div style={{fontWeight: 'bold'}}>{type.name}</div>
+                                <div style={{fontSize: '14px', color: '#666'}}>{type.capacity}</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {formData.propertyType && (
+                        <>
+                            <h3>面積</h3>
+                            <div className="area-options">
+                                {PROPERTY_TYPES[formData.propertyType].areas.map(area => (
+                                    <div
+                                        key={area}
+                                        className={`area-option ${formData.area === area.toString() ? 'selected' : ''}`}
+                                        onClick={() => setFormData({...formData, area: area.toString(), customArea: ''})}
+                                    >
+                                        {area}㎡
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">カスタム面積</label>
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    placeholder="面積を入力（㎡）"
+                                    value={formData.customArea}
+                                    onChange={(e) => setFormData({...formData, customArea: e.target.value, area: ''})}
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    <h3>民泊運営形態</h3>
+                    <div className="law-options">
+                        {Object.entries(MINPAKU_LAWS).map(([key, law]) => (
+                            <div
+                                key={key}
+                                className={`law-option ${formData.minpakuLaw === key ? 'selected' : ''}`}
+                                onClick={() => setFormData({...formData, minpakuLaw: key})}
+                            >
+                                <div style={{fontWeight: 'bold'}}>{law.name}</div>
+                                <div style={{fontSize: '14px', color: '#666'}}>{law.description}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            const renderStep4 = () => {
+                const selectedArea = formData.area || formData.customArea;
+                const maxCapacity = Math.min(8, Math.floor(parseInt(selectedArea) / 8) + 1);
+                const capacityOptions = [];
+                for (let i = 1; i <= maxCapacity; i++) {
+                    capacityOptions.push(i);
+                }
+
+                return (
+                    <div className="step-content">
+                        <h2 className="step-title">収容人数を選択してください</h2>
+                        <p>面積: {selectedArea}㎡</p>
+                        <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>
+                            ※ 2段ベッドやソファベッドを活用することで収容人数を増やすことができます
+                        </p>
+                        
+                        <div className="capacity-options">
+                            {capacityOptions.map(capacity => (
+                                <div
+                                    key={capacity}
+                                    className={`capacity-option ${formData.capacity === capacity.toString() ? 'selected' : ''}`}
+                                    onClick={() => setFormData({...formData, capacity: capacity.toString()})}
+                                >
+                                    {capacity}名
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderStep5 = () => (
+                <div className="step-content">
+                    <h2 className="step-title">投資金額を入力してください</h2>
+                    
+                    {formData.operationType === 'rental' ? (
+                        <>
+                            <div className="form-group">
+                                <label className="form-label">月額家賃（円）</label>
+                                <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    className="form-input"
+                                    placeholder="例: 120000"
+                                    value={formData.monthlyRent}
+                                    onChange={(e) => setFormData({...formData, monthlyRent: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">リノベーション費用（万円）</label>
+                                <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    className="form-input"
+                                    placeholder="例: 400"
+                                    value={formData.renovationCost}
+                                    onChange={(e) => setFormData({...formData, renovationCost: e.target.value})}
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="form-group">
+                                <label className="form-label">物件購入価格（万円）</label>
+                                <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    className="form-input"
+                                    placeholder="例: 3000"
+                                    value={formData.purchasePrice}
+                                    onChange={(e) => setFormData({...formData, purchasePrice: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">リノベーション費用（万円）</label>
+                                <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    className="form-input"
+                                    placeholder="例: 400"
+                                    value={formData.renovationCost}
+                                    onChange={(e) => setFormData({...formData, renovationCost: e.target.value})}
+                                />
+                            </div>
+                        </>
+                    )}
+                </div>
+            );
+
+            const renderStep6 = () => (
+                <div className="step-content">
+                    <h2 className="step-title">初期費用を入力してください</h2>
+                    <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>
+                        相場に基づいて自動入力されています。必要に応じて修正してください。
+                    </p>
+                    
+                    <div className="form-group">
+                        <label className="form-label">敷金（円）</label>
+                        <input
+                            type="number"
+                            inputMode="numeric"
+                            className="form-input auto-filled"
+                            placeholder="家賃の2ヶ月分"
+                            value={formData.deposit}
+                            onChange={(e) => setFormData({...formData, deposit: e.target.value})}
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="form-label">礼金（円）</label>
+                        <input
+                            type="number"
+                            inputMode="numeric"
+                            className="form-input auto-filled"
+                            placeholder="家賃の1ヶ月分"
+                            value={formData.keyMoney}
+                            onChange={(e) => setFormData({...formData, keyMoney: e.target.value})}
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="form-label">仲介手数料（円）</label>
+                        <input
+                            type="number"
+                            inputMode="numeric"
+                            className="form-input auto-filled"
+                            placeholder="家賃の1ヶ月分"
+                            value={formData.brokerFee}
+                            onChange={(e) => setFormData({...formData, brokerFee: e.target.value})}
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="form-label">空家賃期間（円）</label>
+                        <input
+                            type="number"
+                            inputMode="numeric"
+                            className="form-input auto-filled"
+                            placeholder="準備期間の家賃"
+                            value={formData.vacantRent}
+                            onChange={(e) => setFormData({...formData, vacantRent: e.target.value})}
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="form-label">火災保険（円）</label>
+                        <input
+                            type="number"
+                            inputMode="numeric"
+                            className="form-input auto-filled"
+                            placeholder="年間保険料"
+                            value={formData.insurance}
+                            onChange={(e) => setFormData({...formData, insurance: e.target.value})}
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="form-label">保証会社（円）</label>
+                        <input
+                            type="number"
+                            inputMode="numeric"
+                            className="form-input auto-filled"
+                            placeholder="家賃の0.5ヶ月分"
+                            value={formData.guarantee}
+                            onChange={(e) => setFormData({...formData, guarantee: e.target.value})}
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="form-label">その他費用（円）</label>
+                        <input
+                            type="number"
+                            inputMode="numeric"
+                            className="form-input auto-filled"
+                            placeholder="鍵交換、クリーニング等"
+                            value={formData.otherCosts}
+                            onChange={(e) => setFormData({...formData, otherCosts: e.target.value})}
+                        />
+                    </div>
+                </div>
+            );
+
+            const renderStep7 = () => {
+                const totalInitialCost = formData.operationType === 'rental' ? 
+                    (parseInt(formData.deposit || 0) + 
+                     parseInt(formData.keyMoney || 0) + 
+                     parseInt(formData.brokerFee || 0) + 
+                     parseInt(formData.vacantRent || 0) + 
+                     parseInt(formData.insurance || 0) + 
+                     parseInt(formData.guarantee || 0) + 
+                     parseInt(formData.otherCosts || 0)) : 0;
+
+                return (
+                    <div className="step-content">
+                        <h2 className="step-title">入力内容の確認</h2>
+                        
+                        <div className="summary-section">
+                            <div className="summary-item">
+                                <span>地域:</span>
+                                <span>{REGIONS[formData.region]?.name}</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>運営形態:</span>
+                                <span>{formData.operationType === 'rental' ? '転貸（賃貸物件で民泊運営）' : '購入（物件購入して民泊運営）'}</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>物件タイプ:</span>
+                                <span>{formData.propertyType}</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>面積:</span>
+                                <span>{formData.area || formData.customArea}㎡</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>収容人数:</span>
+                                <span>{formData.capacity}名</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>民泊法:</span>
+                                <span>{MINPAKU_LAWS[formData.minpakuLaw]?.name} ({MINPAKU_LAWS[formData.minpakuLaw]?.limit})</span>
+                            </div>
+                            
+                            {formData.operationType === 'rental' ? (
+                                <>
+                                    <div className="summary-item">
+                                        <span>月額家賃:</span>
+                                        <span>{parseInt(formData.monthlyRent || 0).toLocaleString()}円</span>
+                                    </div>
+                                    <div className="summary-item">
+                                        <span>リノベーション費用:</span>
+                                        <span>{parseInt(formData.renovationCost || 0)}万円</span>
+                                    </div>
+                                    <div className="summary-item">
+                                        <span>初期費用合計:</span>
+                                        <span>{totalInitialCost.toLocaleString()}円</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="summary-item">
+                                        <span>物件購入価格:</span>
+                                        <span>{parseInt(formData.purchasePrice || 0)}万円</span>
+                                    </div>
+                                    <div className="summary-item">
+                                        <span>リノベーション費用:</span>
+                                        <span>{parseInt(formData.renovationCost || 0)}万円</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        
+                        <div style={{textAlign: 'center'}}>
+                            <button className="btn btn-success" onClick={handleSubmit}>
+                                結果を計算
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderCompletion = () => (
+                <div className="step-content">
+                    <div className="completion-message">
+                        <div className="completion-title">🎉 シミュレーション完了！</div>
+                        <div className="completion-text">
+                            詳細な結果は公式LINEで確認できます
+                        </div>
+                        
+                        <div style={{marginBottom: '30px'}}>
+                            <p><strong>結果の受け取り方法:</strong></p>
+                            <p>1. 下のボタンから公式LINEに登録</p>
+                            <p>2. LINEで「結果」とメッセージを送信</p>
+                            <p>3. 詳細なシミュレーション結果が届きます！</p>
+                        </div>
+                        
+                        <div>
+                            <a href={CONFIG.LINE_URL} target="_blank" rel="noopener noreferrer" className="line-button">
+                                📱 公式LINEに登録する
+                            </a>
+                            <button className="btn btn-primary" onClick={() => {
+                                setCurrentStep(1);
+                                setFormData({
+                                    region: '',
+                                    operationType: '',
+                                    propertyType: '',
+                                    area: '',
+                                    customArea: '',
+                                    minpakuLaw: '',
+                                    capacity: '',
+                                    monthlyRent: '',
+                                    purchasePrice: '',
+                                    renovationCost: '',
+                                    deposit: '',
+                                    keyMoney: '',
+                                    brokerFee: '',
+                                    vacantRent: '',
+                                    insurance: '',
+                                    guarantee: '',
+                                    otherCosts: ''
+                                });
+                            }}>
+                                新しいシミュレーション
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <img src="logo.png" alt="有村昆の民泊塾" className="logo" />
+                        <h1 className="title">民泊シミュレーター</h1>
+                        <p className="subtitle">あなたの民泊投資を詳細にシミュレーション</p>
+                    </div>
+
+                    {currentStep <= totalSteps && (
+                        <div className="step-indicator">
+                            {Array.from({length: totalSteps}, (_, i) => (
+                                <div
+                                    key={i + 1}
+                                    className={`step ${
+                                        i + 1 < currentStep ? 'completed' : 
+                                        i + 1 === currentStep ? 'active' : ''
+                                    }`}
+                                >
+                                    {i + 1}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {renderStep()}
+
+                    {currentStep <= totalSteps && (
+                        <div className="navigation">
+                            <button
+                                className="btn btn-secondary"
+                                onClick={handlePrev}
+                                disabled={currentStep === 1}
+                            >
+                                戻る
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleNext}
+                                disabled={!isStepValid() || currentStep === totalSteps}
+                            >
+                                次へ
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // アプリケーションの初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<MinpakuSimulator />);
+        });
+    </script>
+</body>
+</html>
+
