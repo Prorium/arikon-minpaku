@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有村昆の民泊塾 | 民泊収益シミュレーター</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'ヒラギノ角ゴシック', 'Yu Gothic', 'メイリオ', sans-serif;
+            background: white;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 300px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 28px;
+            color: #d2691e;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            gap: 10px;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            background: #ccc;
+        }
+
+        .step.active {
+            background: #28a745;
+        }
+
+        .step.completed {
+            background: #28a745;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-card {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .option-card:hover {
+            border-color: #28a745;
+            transform: translateY(-2px);
+        }
+
+        .option-card.selected {
+            border-color: #28a745;
+            background: #28a745;
+            color: white;
+        }
+
+        .option-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .option-subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #28a745;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .completion-card {
+            background: #28a745;
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .completion-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .completion-subtitle {
+            font-size: 16px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .result-steps {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .result-steps h4 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .result-steps ol {
+            margin-left: 20px;
+        }
+
+        .result-steps li {
+            margin-bottom: 8px;
+        }
+
+        .line-button {
+            background: #00c300;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .line-button:hover {
+            background: #00a300;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .confirmation-table {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .confirmation-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .confirmation-row:last-child {
+            border-bottom: none;
+        }
+
+        .confirmation-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .confirmation-value {
+            color: #666;
+        }
+
+        .capacity-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .capacity-option {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .capacity-option:hover {
+            border-color: #28a745;
+        }
+
+        .capacity-option.selected {
+            border-color: #28a745;
+            background: #28a745;
+            color: white;
+        }
+
+        .auto-fill-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" alt="有村昆の民泊塾" class="logo">
+            <h1 class="title">民泊収益シミュレーター</h1>
+        </div>
+
+        <div class="step-indicator" id="stepIndicator">
+            <!-- Steps will be dynamically generated -->
+        </div>
+
+        <div id="app">
+            <!-- Content will be dynamically generated -->
+        </div>
+
+        <div class="footer">
+            © 2024 有村昆の民泊塾. All rights reserved.
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Configuration and data
+        const CONFIG = {
+            BACKEND_URL: 'https://arikon-minpaku-backend.onrender.com',
+            LINE_URL: 'https://lin.ee/VzUHQsm'
+        };
+
+        const REGIONS = {
+            tokyo: { name: '東京都', price: 8500, occupancy: 75 },
+            osaka: { name: '大阪府', price: 6500, occupancy: 70 },
+            kyoto: { name: '京都府', price: 7000, occupancy: 68 },
+            kanagawa: { name: '神奈川県', price: 7500, occupancy: 72 },
+            aichi: { name: '愛知県', price: 5500, occupancy: 65 },
+            fukuoka: { name: '福岡県', price: 4500, occupancy: 62 }
+        };
+
+        const PROPERTY_TYPES = {
+            '1R': { name: '1R', baseCapacity: 1, areas: [15, 18, 20, 22, 25] },
+            '1K': { name: '1K', baseCapacity: 2, areas: [20, 22, 25, 28, 30] },
+            '1DK': { name: '1DK', baseCapacity: 2, areas: [25, 28, 30, 32, 35] },
+            '1LDK': { name: '1LDK', baseCapacity: 3, areas: [35, 40, 45, 50, 55] },
+            '2K': { name: '2K', baseCapacity: 3, areas: [30, 35, 40, 45, 50] },
+            '2DK': { name: '2DK', baseCapacity: 4, areas: [40, 45, 50, 55, 60] },
+            '2LDK': { name: '2LDK', baseCapacity: 4, areas: [50, 55, 60, 65, 70] },
+            '3LDK': { name: '3LDK', baseCapacity: 6, areas: [65, 70, 75, 80, 85] }
+        };
+
+        const MINPAKU_LAWS = {
+            shinpo: { name: '民泊新法対応', subtitle: '180日制限あり', days: 180 },
+            ryokan: { name: '旅館業法', subtitle: '制限なし', days: 365 },
+            tokku: { name: '特区民泊', subtitle: '制限なし', days: 365 }
+        };
+
+        const OPERATION_TYPES = {
+            rental: { name: '転貸', subtitle: '賃貸物件で民泊運営', steps: 7 },
+            purchase: { name: '購入', subtitle: '物件購入して民泊運営', steps: 6 }
+        };
+
+        // Calculate capacity options based on area
+        const getCapacityOptions = (propertyType, area) => {
+            const baseCapacity = PROPERTY_TYPES[propertyType]?.baseCapacity || 1;
+            const maxCapacity = Math.min(Math.floor(area / 8), baseCapacity + 3); // 8㎡per person max
+            const options = [];
+            
+            for (let i = 1; i <= Math.max(baseCapacity + 2, maxCapacity); i++) {
+                options.push(i);
+            }
+            
+            return options;
+        };
+
+        // Calculate initial costs based on rent
+        const calculateInitialCosts = (monthlyRent) => {
+            return {
+                deposit: monthlyRent * 2,      // 敷金: 家賃2ヶ月分
+                keyMoney: monthlyRent * 1,     // 礼金: 家賃1ヶ月分
+                brokerFee: monthlyRent * 1,    // 仲介手数料: 家賃1ヶ月分
+                vacantRent: monthlyRent * 1,   // 空家賃: 家賃1ヶ月分
+                insurance: 20000,              // 火災保険: 年間2万円
+                guarantee: monthlyRent * 0.5,  // 保証会社: 家賃0.5ヶ月分
+                other: 50000                   // その他: 5万円
+            };
+        };
+
+        function MinpakuSimulator() {
+            const [currentStep, setCurrentStep] = useState(1);
+            const [totalSteps, setTotalSteps] = useState(6);
+            const [formData, setFormData] = useState({
+                region: '',
+                operationType: '',
+                propertyType: '',
+                area: '',
+                customArea: '',
+                capacity: '',
+                minpakuLaw: '',
+                monthlyRent: '',
+                purchasePrice: '',
+                renovationCost: '',
+                initialCosts: {
+                    deposit: '',
+                    keyMoney: '',
+                    brokerFee: '',
+                    vacantRent: '',
+                    insurance: '',
+                    guarantee: '',
+                    other: ''
+                }
+            });
+
+            const updateFormData = (key, value) => {
+                setFormData(prev => ({ ...prev, [key]: value }));
+            };
+
+            const updateInitialCosts = (key, value) => {
+                setFormData(prev => ({
+                    ...prev,
+                    initialCosts: { ...prev.initialCosts, [key]: value }
+                }));
+            };
+
+            // Auto-fill initial costs when monthly rent changes
+            useEffect(() => {
+                if (formData.monthlyRent && formData.operationType === 'rental') {
+                    const rent = parseInt(formData.monthlyRent);
+                    if (!isNaN(rent)) {
+                        const costs = calculateInitialCosts(rent);
+                        setFormData(prev => ({
+                            ...prev,
+                            initialCosts: {
+                                deposit: costs.deposit.toString(),
+                                keyMoney: costs.keyMoney.toString(),
+                                brokerFee: costs.brokerFee.toString(),
+                                vacantRent: costs.vacantRent.toString(),
+                                insurance: costs.insurance.toString(),
+                                guarantee: costs.guarantee.toString(),
+                                other: costs.other.toString()
+                            }
+                        }));
+                    }
+                }
+            }, [formData.monthlyRent, formData.operationType]);
+
+            // Update total steps based on operation type
+            useEffect(() => {
+                if (formData.operationType) {
+                    setTotalSteps(OPERATION_TYPES[formData.operationType].steps);
+                }
+            }, [formData.operationType]);
+
+            const nextStep = () => {
+                if (currentStep < totalSteps) {
+                    setCurrentStep(currentStep + 1);
+                }
+            };
+
+            const prevStep = () => {
+                if (currentStep > 1) {
+                    setCurrentStep(currentStep - 1);
+                }
+            };
+
+            const submitSimulation = async () => {
+                try {
+                    const simulationData = {
+                        ...formData,
+                        area: formData.customArea || formData.area,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    const response = await fetch(`${CONFIG.BACKEND_URL}/api/simulation`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(simulationData)
+                    });
+
+                    if (response.ok) {
+                        setCurrentStep(totalSteps + 1); // Show completion screen
+                    } else {
+                        alert('計算中にエラーが発生しました。入力内容を確認してください。');
+                    }
+                } catch (error) {
+                    console.error('Simulation error:', error);
+                    alert('計算中にエラーが発生しました。入力内容を確認してください。');
+                }
+            };
+
+            const resetSimulation = () => {
+                setCurrentStep(1);
+                setTotalSteps(6);
+                setFormData({
+                    region: '',
+                    operationType: '',
+                    propertyType: '',
+                    area: '',
+                    customArea: '',
+                    capacity: '',
+                    minpakuLaw: '',
+                    monthlyRent: '',
+                    purchasePrice: '',
+                    renovationCost: '',
+                    initialCosts: {
+                        deposit: '',
+                        keyMoney: '',
+                        brokerFee: '',
+                        vacantRent: '',
+                        insurance: '',
+                        guarantee: '',
+                        other: ''
+                    }
+                });
+            };
+
+            const renderStepIndicator = () => {
+                const steps = [];
+                for (let i = 1; i <= totalSteps; i++) {
+                    steps.push(
+                        <div 
+                            key={i} 
+                            className={`step ${i === currentStep ? 'active' : i < currentStep ? 'completed' : ''}`}
+                        >
+                            {i}
+                        </div>
+                    );
+                }
+                return steps;
+            };
+
+            const renderStep = () => {
+                switch (currentStep) {
+                    case 1:
+                        return renderRegionSelection();
+                    case 2:
+                        return renderOperationTypeSelection();
+                    case 3:
+                        return renderPropertySelection();
+                    case 4:
+                        return renderCapacitySelection();
+                    case 5:
+                        return renderInvestmentInput();
+                    case 6:
+                        return formData.operationType === 'rental' ? renderInitialCostsInput() : renderConfirmation();
+                    case 7:
+                        return renderConfirmation();
+                    default:
+                        return renderCompletion();
+                }
+            };
+
+            const renderRegionSelection = () => (
+                <div className="form-section">
+                    <h2 className="section-title">地域を選択してください</h2>
+                    <div className="options-grid">
+                        {Object.entries(REGIONS).map(([key, region]) => (
+                            <div
+                                key={key}
+                                className={`option-card ${formData.region === key ? 'selected' : ''}`}
+                                onClick={() => updateFormData('region', key)}
+                            >
+                                <div className="option-title">{region.name}</div>
+                                <div className="option-subtitle">
+                                    平均単価: ¥{region.price.toLocaleString()}/泊<br/>
+                                    稼働率: {region.occupancy}%
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="buttons">
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={nextStep}
+                            disabled={!formData.region}
+                        >
+                            次へ
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const renderOperationTypeSelection = () => (
+                <div className="form-section">
+                    <h2 className="section-title">運営形態を選択してください</h2>
+                    <div className="options-grid">
+                        {Object.entries(OPERATION_TYPES).map(([key, type]) => (
+                            <div
+                                key={key}
+                                className={`option-card ${formData.operationType === key ? 'selected' : ''}`}
+                                onClick={() => updateFormData('operationType', key)}
+                            >
+                                <div className="option-title">{type.name}（{type.subtitle}）</div>
+                                <div className="option-subtitle">
+                                    {key === 'rental' ? '賃貸物件を借りて民泊運営' : '物件を購入して民泊運営'}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="buttons">
+                        <button className="btn btn-secondary" onClick={prevStep}>戻る</button>
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={nextStep}
+                            disabled={!formData.operationType}
+                        >
+                            次へ
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const renderPropertySelection = () => (
+                <div className="form-section">
+                    <h2 className="section-title">物件タイプと面積を選択してください</h2>
+                    
+                    <h3>物件タイプ</h3>
+                    <div className="options-grid">
+                        {Object.entries(PROPERTY_TYPES).map(([key, type]) => (
+                            <div
+                                key={key}
+                                className={`option-card ${formData.propertyType === key ? 'selected' : ''}`}
+                                onClick={() => {
+                                    updateFormData('propertyType', key);
+                                    updateFormData('area', '');
+                                    updateFormData('customArea', '');
+                                }}
+                            >
+                                <div className="option-title">{type.name}</div>
+                                <div className="option-subtitle">基本定員: {type.baseCapacity}名</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {formData.propertyType && (
+                        <>
+                            <h3>面積 (㎡)</h3>
+                            <div className="options-grid">
+                                {PROPERTY_TYPES[formData.propertyType].areas.map(area => (
+                                    <div
+                                        key={area}
+                                        className={`option-card ${formData.area === area.toString() ? 'selected' : ''}`}
+                                        onClick={() => {
+                                            updateFormData('area', area.toString());
+                                            updateFormData('customArea', '');
+                                        }}
+                                    >
+                                        <div className="option-title">{area}㎡</div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="input-group">
+                                <label className="input-label">カスタム面積</label>
+                                <input
+                                    type="number"
+                                    className="input-field"
+                                    placeholder="例: 35"
+                                    value={formData.customArea}
+                                    onChange={(e) => {
+                                        updateFormData('customArea', e.target.value);
+                                        updateFormData('area', '');
+                                    }}
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    <h3>民泊運営形態</h3>
+                    <div className="options-grid">
+                        {Object.entries(MINPAKU_LAWS).map(([key, law]) => (
+                            <div
+                                key={key}
+                                className={`option-card ${formData.minpakuLaw === key ? 'selected' : ''}`}
+                                onClick={() => updateFormData('minpakuLaw', key)}
+                            >
+                                <div className="option-title">{law.name}（{law.subtitle}）</div>
+                                <div className="option-subtitle">
+                                    年間営業日数{law.days === 365 ? '制限なし' : `最大${law.days}日まで`}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="buttons">
+                        <button className="btn btn-secondary" onClick={prevStep}>戻る</button>
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={nextStep}
+                            disabled={!formData.propertyType || (!formData.area && !formData.customArea) || !formData.minpakuLaw}
+                        >
+                            次へ
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const renderCapacitySelection = () => {
+                const selectedArea = parseInt(formData.customArea || formData.area);
+                const capacityOptions = getCapacityOptions(formData.propertyType, selectedArea);
+
+                return (
+                    <div className="form-section">
+                        <h2 className="section-title">収容人数を選択してください</h2>
+                        <p style={{textAlign: 'center', marginBottom: '20px', color: '#666'}}>
+                            {formData.propertyType} {selectedArea}㎡の場合の推奨収容人数
+                        </p>
+                        
+                        <div className="capacity-selector">
+                            {capacityOptions.map(capacity => (
+                                <div
+                                    key={capacity}
+                                    className={`capacity-option ${formData.capacity === capacity.toString() ? 'selected' : ''}`}
+                                    onClick={() => updateFormData('capacity', capacity.toString())}
+                                >
+                                    <div style={{fontSize: '18px', fontWeight: 'bold'}}>{capacity}名</div>
+                                    {capacity <= PROPERTY_TYPES[formData.propertyType].baseCapacity && (
+                                        <div style={{fontSize: '12px', opacity: '0.7'}}>標準</div>
+                                    )}
+                                    {capacity > PROPERTY_TYPES[formData.propertyType].baseCapacity && (
+                                        <div style={{fontSize: '12px', opacity: '0.7'}}>2段ベッド等</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div style={{background: '#f8f9fa', padding: '15px', borderRadius: '8px', marginTop: '20px'}}>
+                            <h4>収容人数の目安</h4>
+                            <ul style={{marginLeft: '20px', marginTop: '10px'}}>
+                                <li>標準: 通常のベッド配置</li>
+                                <li>2段ベッド等: システム2段ベッドで上1名、下2名など</li>
+                                <li>面積1㎡あたり最大8㎡/人を推奨</li>
+                            </ul>
+                        </div>
+
+                        <div className="buttons">
+                            <button className="btn btn-secondary" onClick={prevStep}>戻る</button>
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={nextStep}
+                                disabled={!formData.capacity}
+                            >
+                                次へ
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderInvestmentInput = () => (
+                <div className="form-section">
+                    <h2 className="section-title">
+                        {formData.operationType === 'rental' ? '月額家賃を入力してください' : '投資金額を入力してください'}
+                    </h2>
+                    
+                    {formData.operationType === 'rental' ? (
+                        <div className="input-group">
+                            <label className="input-label">月額家賃 (円)</label>
+                            <input
+                                type="number"
+                                className="input-field"
+                                placeholder="例: 80000"
+                                value={formData.monthlyRent}
+                                onChange={(e) => updateFormData('monthlyRent', e.target.value)}
+                            />
+                            <div className="auto-fill-note">
+                                賃貸物件の月額家賃を入力してください。
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="input-group">
+                            <label className="input-label">物件購入価格 (万円)</label>
+                            <input
+                                type="number"
+                                className="input-field"
+                                placeholder="例: 2000"
+                                value={formData.purchasePrice}
+                                onChange={(e) => updateFormData('purchasePrice', e.target.value)}
+                            />
+                            <div className="auto-fill-note">
+                                物件の購入価格を万円単位で入力してください。
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="input-group">
+                        <label className="input-label">リノベーション費用 (万円)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            placeholder="例: 300"
+                            value={formData.renovationCost}
+                            onChange={(e) => updateFormData('renovationCost', e.target.value)}
+                        />
+                        <div className="auto-fill-note">
+                            民泊用のリノベーション・内装費用を万円単位で入力してください。
+                        </div>
+                    </div>
+
+                    <div className="buttons">
+                        <button className="btn btn-secondary" onClick={prevStep}>戻る</button>
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={nextStep}
+                            disabled={
+                                !formData.renovationCost || 
+                                (formData.operationType === 'rental' && !formData.monthlyRent) ||
+                                (formData.operationType === 'purchase' && !formData.purchasePrice)
+                            }
+                        >
+                            次へ
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const renderInitialCostsInput = () => (
+                <div className="form-section">
+                    <h2 className="section-title">初期費用を入力してください</h2>
+                    <p style={{textAlign: 'center', marginBottom: '20px', color: '#666'}}>
+                        月額家賃 {parseInt(formData.monthlyRent).toLocaleString()}円に基づく相場を自動入力しています
+                    </p>
+                    
+                    <div className="input-group">
+                        <label className="input-label">敷金 (円)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            placeholder={`相場: ${(parseInt(formData.monthlyRent) * 2).toLocaleString()}円`}
+                            value={formData.initialCosts.deposit}
+                            onChange={(e) => updateInitialCosts('deposit', e.target.value)}
+                        />
+                        <div className="auto-fill-note">家賃の2ヶ月分が相場</div>
+                    </div>
+
+                    <div className="input-group">
+                        <label className="input-label">礼金 (円)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            placeholder={`相場: ${parseInt(formData.monthlyRent).toLocaleString()}円`}
+                            value={formData.initialCosts.keyMoney}
+                            onChange={(e) => updateInitialCosts('keyMoney', e.target.value)}
+                        />
+                        <div className="auto-fill-note">家賃の1ヶ月分が相場</div>
+                    </div>
+
+                    <div className="input-group">
+                        <label className="input-label">仲介手数料 (円)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            placeholder={`相場: ${parseInt(formData.monthlyRent).toLocaleString()}円`}
+                            value={formData.initialCosts.brokerFee}
+                            onChange={(e) => updateInitialCosts('brokerFee', e.target.value)}
+                        />
+                        <div className="auto-fill-note">家賃の1ヶ月分が相場</div>
+                    </div>
+
+                    <div className="input-group">
+                        <label className="input-label">空家賃期間 (円)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            placeholder={`相場: ${parseInt(formData.monthlyRent).toLocaleString()}円`}
+                            value={formData.initialCosts.vacantRent}
+                            onChange={(e) => updateInitialCosts('vacantRent', e.target.value)}
+                        />
+                        <div className="auto-fill-note">準備期間の家賃</div>
+                    </div>
+
+                    <div className="input-group">
+                        <label className="input-label">火災保険 (円)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            placeholder="相場: 20,000円"
+                            value={formData.initialCosts.insurance}
+                            onChange={(e) => updateInitialCosts('insurance', e.target.value)}
+                        />
+                        <div className="auto-fill-note">年間2万円程度</div>
+                    </div>
+
+                    <div className="input-group">
+                        <label className="input-label">保証会社 (円)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            placeholder={`相場: ${(parseInt(formData.monthlyRent) * 0.5).toLocaleString()}円`}
+                            value={formData.initialCosts.guarantee}
+                            onChange={(e) => updateInitialCosts('guarantee', e.target.value)}
+                        />
+                        <div className="auto-fill-note">家賃の0.5ヶ月分が相場</div>
+                    </div>
+
+                    <div className="input-group">
+                        <label className="input-label">その他費用 (円)</label>
+                        <input
+                            type="number"
+                            className="input-field"
+                            placeholder="例: 50000"
+                            value={formData.initialCosts.other}
+                            onChange={(e) => updateInitialCosts('other', e.target.value)}
+                        />
+                        <div className="auto-fill-note">鍵交換、クリーニング等</div>
+                    </div>
+
+                    <div className="buttons">
+                        <button className="btn btn-secondary" onClick={prevStep}>戻る</button>
+                        <button className="btn btn-primary" onClick={nextStep}>次へ</button>
+                    </div>
+                </div>
+            );
+
+            const renderConfirmation = () => {
+                const selectedArea = formData.customArea || formData.area;
+                const totalInitialCosts = formData.operationType === 'rental' 
+                    ? Object.values(formData.initialCosts).reduce((sum, cost) => sum + (parseInt(cost) || 0), 0)
+                    : 0;
+
+                return (
+                    <div className="form-section">
+                        <h2 className="section-title">入力内容の確認</h2>
+                        
+                        <div className="confirmation-table">
+                            <div className="confirmation-row">
+                                <span className="confirmation-label">地域:</span>
+                                <span className="confirmation-value">{REGIONS[formData.region]?.name}</span>
+                            </div>
+                            <div className="confirmation-row">
+                                <span className="confirmation-label">運営形態:</span>
+                                <span className="confirmation-value">
+                                    {OPERATION_TYPES[formData.operationType]?.name}（{OPERATION_TYPES[formData.operationType]?.subtitle}）
+                                </span>
+                            </div>
+                            <div className="confirmation-row">
+                                <span className="confirmation-label">物件タイプ:</span>
+                                <span className="confirmation-value">{formData.propertyType}</span>
+                            </div>
+                            <div className="confirmation-row">
+                                <span className="confirmation-label">面積:</span>
+                                <span className="confirmation-value">{selectedArea}㎡</span>
+                            </div>
+                            <div className="confirmation-row">
+                                <span className="confirmation-label">収容人数:</span>
+                                <span className="confirmation-value">{formData.capacity}名</span>
+                            </div>
+                            <div className="confirmation-row">
+                                <span className="confirmation-label">民泊法:</span>
+                                <span className="confirmation-value">
+                                    {MINPAKU_LAWS[formData.minpakuLaw]?.name}（{MINPAKU_LAWS[formData.minpakuLaw]?.subtitle}）
+                                </span>
+                            </div>
+                            {formData.operationType === 'rental' && (
+                                <div className="confirmation-row">
+                                    <span className="confirmation-label">月額家賃:</span>
+                                    <span className="confirmation-value">{parseInt(formData.monthlyRent).toLocaleString()}円</span>
+                                </div>
+                            )}
+                            {formData.operationType === 'purchase' && (
+                                <div className="confirmation-row">
+                                    <span className="confirmation-label">物件購入価格:</span>
+                                    <span className="confirmation-value">{parseInt(formData.purchasePrice).toLocaleString()}万円</span>
+                                </div>
+                            )}
+                            <div className="confirmation-row">
+                                <span className="confirmation-label">リノベーション費用:</span>
+                                <span className="confirmation-value">{parseInt(formData.renovationCost).toLocaleString()}万円</span>
+                            </div>
+                            {formData.operationType === 'rental' && (
+                                <div className="confirmation-row">
+                                    <span className="confirmation-label">初期費用合計:</span>
+                                    <span className="confirmation-value">{totalInitialCosts.toLocaleString()}円</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="buttons">
+                            <button className="btn btn-secondary" onClick={prevStep}>戻る</button>
+                            <button className="btn btn-primary" onClick={submitSimulation}>結果を計算</button>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderCompletion = () => (
+                <div className="completion-card">
+                    <div className="completion-title">🎉 シミュレーション完了！</div>
+                    <div className="completion-subtitle">詳細な結果は公式LINEで確認できます</div>
+                    
+                    <div className="result-steps">
+                        <h4>📱 結果の受け取り方法</h4>
+                        <ol>
+                            <li>下のボタンから公式LINEに登録</li>
+                            <li>LINEで「結果」とメッセージを送信</li>
+                            <li>詳細なシミュレーション結果が届きます！</li>
+                        </ol>
+                    </div>
+
+                    <a href={CONFIG.LINE_URL} target="_blank" rel="noopener noreferrer" className="line-button">
+                        📱 公式LINEに登録する
+                    </a>
+                    
+                    <div style={{marginTop: '20px', fontSize: '14px', opacity: '0.8'}}>
+                        ※ 登録後、「結果」とメッセージを送信してください
+                    </div>
+
+                    <button className="btn btn-primary" onClick={resetSimulation} style={{marginTop: '20px'}}>
+                        新しいシミュレーション
+                    </button>
+                </div>
+            );
+
+            return (
+                <div>
+                    <div className="step-indicator">
+                        {renderStepIndicator()}
+                    </div>
+                    {renderStep()}
+                </div>
+            );
+        }
+
+        // Initialize the app
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<MinpakuSimulator />);
+
+        // Update step indicator
+        const stepIndicator = document.getElementById('stepIndicator');
+        if (stepIndicator) {
+            // Steps will be rendered by React component
+        }
+    </script>
+</body>
+</html>
+
