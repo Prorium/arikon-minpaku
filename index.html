@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>有村昆の民泊塾 - 民泊シミュレーター</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         * {
@@ -588,8 +588,8 @@
 
                 const monthlyProfit = monthlyRevenue - monthlyExpenses;
                 const annualProfit = monthlyProfit * 12;
-                const roi = totalInvestment > 0 ? (annualProfit / totalInvestment * 100) : 0;
-                const paybackPeriod = monthlyProfit > 0 ? totalInvestment / monthlyProfit : 0;
+                const roi = totalInvestment > 0 ? (annualProfit / totalInvestment) * 100 : 0;
+                const recoveryPeriod = monthlyProfit > 0 ? totalInvestment / monthlyProfit / 12 : 999;
 
                 return {
                     monthlyRevenue: Math.round(monthlyRevenue),
@@ -598,89 +598,8 @@
                     annualProfit: Math.round(annualProfit),
                     totalInvestment: Math.round(totalInvestment),
                     roi: Math.round(roi * 100) / 100,
-                    paybackPeriod: Math.round(paybackPeriod * 10) / 10
+                    recoveryPeriod: Math.round(recoveryPeriod * 10) / 10
                 };
-            };
-
-            const isStepValid = () => {
-                switch (currentStep) {
-                    case 1: return formData.region;
-                    case 2: return formData.operationType;
-                    case 3: return formData.propertyType && (formData.area || formData.customArea) && formData.minpakuLaw;
-                    case 4: return formData.capacity;
-                    case 5: 
-                        if (formData.operationType === 'rental') {
-                            return formData.monthlyRent && formData.renovationCost;
-                        } else {
-                            return formData.purchasePrice && formData.renovationCost;
-                        }
-                    case 6: 
-                        if (formData.operationType === 'rental') {
-                            return true; // 初期費用は自動入力されるため
-                        } else {
-                            return true; // 購入の場合は確認画面
-                        }
-                    case 7: return true; // 確認画面
-                    default: return false;
-                }
-            };
-
-            // LINE Bot結果表示機能
-            window.showLineBotResult = () => {
-                const savedResult = localStorage.getItem('minpakuSimulationResult');
-                if (savedResult) {
-                    const result = JSON.parse(savedResult);
-                    const message = `
-🏠 民泊シミュレーション結果
-
-📍 地域: ${REGIONS[result.region]?.name}
-🏢 運営形態: ${result.operationType === 'rental' ? '転貸' : '購入'}
-🏠 物件: ${result.propertyType} (${result.area || result.customArea}㎡)
-👥 収容人数: ${result.capacity}名
-⚖️ 民泊法: ${MINPAKU_LAWS[result.minpakuLaw]?.name}
-
-💰 収益予測:
-・月間売上: ${result.monthlyRevenue?.toLocaleString()}円
-・月間経費: ${result.monthlyExpenses?.toLocaleString()}円
-・月間利益: ${result.monthlyProfit?.toLocaleString()}円
-・年間利益: ${result.annualProfit?.toLocaleString()}円
-
-📊 投資指標:
-・総投資額: ${result.totalInvestment?.toLocaleString()}円
-・ROI: ${result.roi}%
-・投資回収期間: ${result.paybackPeriod}ヶ月
-
-※ この結果は概算です。実際の収益は市場状況により変動します。
-                    `;
-                    alert(message);
-                    return message;
-                } else {
-                    alert('シミュレーション結果が見つかりません。まずシミュレーションを実行してください。');
-                    return null;
-                }
-            };
-
-            const renderStep = () => {
-                switch (currentStep) {
-                    case 1:
-                        return renderStep1();
-                    case 2:
-                        return renderStep2();
-                    case 3:
-                        return renderStep3();
-                    case 4:
-                        return renderStep4();
-                    case 5:
-                        return renderStep5();
-                    case 6:
-                        return formData.operationType === 'rental' ? renderStep6() : renderStep7();
-                    case 7:
-                        return renderStep7();
-                    case totalSteps + 1:
-                        return renderCompletion();
-                    default:
-                        return null;
-                }
             };
 
             const renderStep1 = () => (
@@ -694,7 +613,7 @@
                                 onClick={() => setFormData({...formData, region: key})}
                             >
                                 <div className="region-name">{region.name}</div>
-                                <div className="region-info">平均単価: {region.avgPrice}円/泊</div>
+                                <div className="region-info">平均単価: {region.avgPrice.toLocaleString()}円/泊</div>
                                 <div className="region-info">稼働率: {region.occupancy}%</div>
                                 <div className="region-info">{region.description}</div>
                             </div>
@@ -711,18 +630,22 @@
                             className={`operation-card ${formData.operationType === 'rental' ? 'selected' : ''}`}
                             onClick={() => setFormData({...formData, operationType: 'rental'})}
                         >
-                            <div className="operation-title">転貸（賃貸物件で民泊運営）</div>
+                            <div className="operation-title">転貸（サブリース）</div>
                             <div className="operation-description">
-                                賃貸物件を借りて民泊運営を行います。初期投資を抑えて始められます。
+                                物件を借りて民泊運営<br/>
+                                初期投資が少ない<br/>
+                                月額家賃が発生
                             </div>
                         </div>
                         <div
                             className={`operation-card ${formData.operationType === 'purchase' ? 'selected' : ''}`}
                             onClick={() => setFormData({...formData, operationType: 'purchase'})}
                         >
-                            <div className="operation-title">購入（物件購入して民泊運営）</div>
+                            <div className="operation-title">購入</div>
                             <div className="operation-description">
-                                物件を購入して民泊運営を行います。長期的な資産形成が可能です。
+                                物件を購入して民泊運営<br/>
+                                初期投資が大きい<br/>
+                                月額家賃なし
                             </div>
                         </div>
                     </div>
@@ -731,59 +654,16 @@
 
             const renderStep3 = () => (
                 <div className="step-content">
-                    <h2 className="step-title">物件情報を入力してください</h2>
-                    
-                    <h3>物件タイプ</h3>
+                    <h2 className="step-title">物件タイプを選択してください</h2>
                     <div className="property-grid">
-                        {Object.entries(PROPERTY_TYPES).map(([key, type]) => (
+                        {Object.entries(PROPERTY_TYPES).map(([key, property]) => (
                             <div
                                 key={key}
                                 className={`property-card ${formData.propertyType === key ? 'selected' : ''}`}
-                                onClick={() => setFormData({...formData, propertyType: key, area: ''})}
+                                onClick={() => setFormData({...formData, propertyType: key})}
                             >
-                                <div style={{fontWeight: 'bold'}}>{type.name}</div>
-                                <div style={{fontSize: '14px', color: '#666'}}>{type.capacity}</div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {formData.propertyType && (
-                        <>
-                            <h3>面積</h3>
-                            <div className="area-options">
-                                {PROPERTY_TYPES[formData.propertyType].areas.map(area => (
-                                    <div
-                                        key={area}
-                                        className={`area-option ${formData.area === area.toString() ? 'selected' : ''}`}
-                                        onClick={() => setFormData({...formData, area: area.toString(), customArea: ''})}
-                                    >
-                                        {area}㎡
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">カスタム面積</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    placeholder="面積を入力（㎡）"
-                                    value={formData.customArea}
-                                    onChange={(e) => setFormData({...formData, customArea: e.target.value, area: ''})}
-                                />
-                            </div>
-                        </>
-                    )}
-
-                    <h3>民泊運営形態</h3>
-                    <div className="law-options">
-                        {Object.entries(MINPAKU_LAWS).map(([key, law]) => (
-                            <div
-                                key={key}
-                                className={`law-option ${formData.minpakuLaw === key ? 'selected' : ''}`}
-                                onClick={() => setFormData({...formData, minpakuLaw: key})}
-                            >
-                                <div style={{fontWeight: 'bold'}}>{law.name}</div>
-                                <div style={{fontSize: '14px', color: '#666'}}>{law.description}</div>
+                                <div style={{fontSize: '18px', fontWeight: 'bold'}}>{property.name}</div>
+                                <div style={{color: '#666', marginTop: '5px'}}>{property.capacity}</div>
                             </div>
                         ))}
                     </div>
@@ -791,21 +671,68 @@
             );
 
             const renderStep4 = () => {
-                const selectedArea = formData.area || formData.customArea;
-                const maxCapacity = Math.min(8, Math.floor(parseInt(selectedArea) / 8) + 1);
+                const propertyType = PROPERTY_TYPES[formData.propertyType];
+                return (
+                    <div className="step-content">
+                        <h2 className="step-title">面積を選択してください</h2>
+                        <div className="area-options">
+                            {propertyType?.areas.map(area => (
+                                <div
+                                    key={area}
+                                    className={`area-option ${formData.area === area.toString() ? 'selected' : ''}`}
+                                    onClick={() => setFormData({...formData, area: area.toString(), customArea: ''})}
+                                >
+                                    {area}㎡
+                                </div>
+                            ))}
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">カスタム面積（㎡）</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                value={formData.customArea}
+                                onChange={(e) => setFormData({...formData, customArea: e.target.value, area: ''})}
+                                placeholder="カスタム面積を入力"
+                            />
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderStep5 = () => (
+                <div className="step-content">
+                    <h2 className="step-title">民泊法を選択してください</h2>
+                    <div className="law-options">
+                        {Object.entries(MINPAKU_LAWS).map(([key, law]) => (
+                            <div
+                                key={key}
+                                className={`law-option ${formData.minpakuLaw === key ? 'selected' : ''}`}
+                                onClick={() => setFormData({...formData, minpakuLaw: key})}
+                            >
+                                <div style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '5px'}}>{law.name}</div>
+                                <div style={{color: '#e91e63', fontWeight: 'bold', marginBottom: '5px'}}>{law.limit}</div>
+                                <div style={{color: '#666'}}>{law.description}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            const renderStep6 = () => {
+                const area = parseInt(formData.area || formData.customArea || 0);
+                const maxCapacity = Math.floor(area / 10);
                 const capacityOptions = [];
-                for (let i = 1; i <= maxCapacity; i++) {
+                for (let i = 1; i <= Math.min(maxCapacity, 8); i++) {
                     capacityOptions.push(i);
                 }
 
                 return (
                     <div className="step-content">
                         <h2 className="step-title">収容人数を選択してください</h2>
-                        <p>面積: {selectedArea}㎡</p>
-                        <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>
-                            ※ 2段ベッドやソファベッドを活用することで収容人数を増やすことができます
+                        <p style={{marginBottom: '20px', color: '#666'}}>
+                            面積 {area}㎡ の場合、最大収容人数は {maxCapacity}名です
                         </p>
-                        
                         <div className="capacity-options">
                             {capacityOptions.map(capacity => (
                                 <div
@@ -821,57 +748,117 @@
                 );
             };
 
-            const renderStep5 = () => (
+            const renderStep7 = () => (
                 <div className="step-content">
                     <h2 className="step-title">投資金額を入力してください</h2>
                     
-                    {formData.operationType === 'rental' ? (
+                    {formData.operationType === 'rental' && (
+                        <div className="form-group">
+                            <label className="form-label">月額家賃（円）</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                value={formData.monthlyRent}
+                                onChange={(e) => setFormData({...formData, monthlyRent: e.target.value})}
+                                placeholder="月額家賃を入力"
+                            />
+                        </div>
+                    )}
+
+                    {formData.operationType === 'purchase' && (
+                        <div className="form-group">
+                            <label className="form-label">物件購入価格（円）</label>
+                            <input
+                                type="number"
+                                className="form-input"
+                                value={formData.purchasePrice}
+                                onChange={(e) => setFormData({...formData, purchasePrice: e.target.value})}
+                                placeholder="物件購入価格を入力"
+                            />
+                        </div>
+                    )}
+
+                    <div className="form-group">
+                        <label className="form-label">リノベーション費用（円）</label>
+                        <input
+                            type="number"
+                            className="form-input"
+                            value={formData.renovationCost}
+                            onChange={(e) => setFormData({...formData, renovationCost: e.target.value})}
+                            placeholder="リノベーション費用を入力"
+                        />
+                    </div>
+
+                    {formData.operationType === 'rental' && (
                         <>
                             <div className="form-group">
-                                <label className="form-label">月額家賃（円）</label>
+                                <label className="form-label">敷金（円）</label>
                                 <input
                                     type="number"
-                                    inputMode="numeric"
-                                    className="form-input"
-                                    placeholder="例: 120000"
-                                    value={formData.monthlyRent}
-                                    onChange={(e) => setFormData({...formData, monthlyRent: e.target.value})}
+                                    className={`form-input ${formData.deposit ? 'auto-filled' : ''}`}
+                                    value={formData.deposit}
+                                    onChange={(e) => setFormData({...formData, deposit: e.target.value})}
+                                    placeholder="敷金"
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">リノベーション費用（万円）</label>
+                                <label className="form-label">礼金（円）</label>
                                 <input
                                     type="number"
-                                    inputMode="numeric"
-                                    className="form-input"
-                                    placeholder="例: 400"
-                                    value={formData.renovationCost}
-                                    onChange={(e) => setFormData({...formData, renovationCost: e.target.value})}
-                                />
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="form-group">
-                                <label className="form-label">物件購入価格（万円）</label>
-                                <input
-                                    type="number"
-                                    inputMode="numeric"
-                                    className="form-input"
-                                    placeholder="例: 3000"
-                                    value={formData.purchasePrice}
-                                    onChange={(e) => setFormData({...formData, purchasePrice: e.target.value})}
+                                    className={`form-input ${formData.keyMoney ? 'auto-filled' : ''}`}
+                                    value={formData.keyMoney}
+                                    onChange={(e) => setFormData({...formData, keyMoney: e.target.value})}
+                                    placeholder="礼金"
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">リノベーション費用（万円）</label>
+                                <label className="form-label">仲介手数料（円）</label>
                                 <input
                                     type="number"
-                                    inputMode="numeric"
-                                    className="form-input"
-                                    placeholder="例: 400"
-                                    value={formData.renovationCost}
-                                    onChange={(e) => setFormData({...formData, renovationCost: e.target.value})}
+                                    className={`form-input ${formData.brokerFee ? 'auto-filled' : ''}`}
+                                    value={formData.brokerFee}
+                                    onChange={(e) => setFormData({...formData, brokerFee: e.target.value})}
+                                    placeholder="仲介手数料"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">前家賃（円）</label>
+                                <input
+                                    type="number"
+                                    className={`form-input ${formData.vacantRent ? 'auto-filled' : ''}`}
+                                    value={formData.vacantRent}
+                                    onChange={(e) => setFormData({...formData, vacantRent: e.target.value})}
+                                    placeholder="前家賃"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">火災保険料（円）</label>
+                                <input
+                                    type="number"
+                                    className={`form-input ${formData.insurance ? 'auto-filled' : ''}`}
+                                    value={formData.insurance}
+                                    onChange={(e) => setFormData({...formData, insurance: e.target.value})}
+                                    placeholder="火災保険料"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">保証料（円）</label>
+                                <input
+                                    type="number"
+                                    className={`form-input ${formData.guarantee ? 'auto-filled' : ''}`}
+                                    value={formData.guarantee}
+                                    onChange={(e) => setFormData({...formData, guarantee: e.target.value})}
+                                    placeholder="保証料"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">その他費用（円）</label>
+                                <input
+                                    type="number"
+                                    className={`form-input ${formData.otherCosts ? 'auto-filled' : ''}`}
+                                    value={formData.otherCosts}
+                                    onChange={(e) => setFormData({...formData, otherCosts: e.target.value})}
+                                    placeholder="その他費用"
                                 />
                             </div>
                         </>
@@ -879,197 +866,89 @@
                 </div>
             );
 
-            const renderStep6 = () => (
-                <div className="step-content">
-                    <h2 className="step-title">初期費用を入力してください</h2>
-                    <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>
-                        相場に基づいて自動入力されています。必要に応じて修正してください。
-                    </p>
-                    
-                    <div className="form-group">
-                        <label className="form-label">敷金（円）</label>
-                        <input
-                            type="number"
-                            inputMode="numeric"
-                            className="form-input auto-filled"
-                            placeholder="家賃の2ヶ月分"
-                            value={formData.deposit}
-                            onChange={(e) => setFormData({...formData, deposit: e.target.value})}
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label className="form-label">礼金（円）</label>
-                        <input
-                            type="number"
-                            inputMode="numeric"
-                            className="form-input auto-filled"
-                            placeholder="家賃の1ヶ月分"
-                            value={formData.keyMoney}
-                            onChange={(e) => setFormData({...formData, keyMoney: e.target.value})}
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label className="form-label">仲介手数料（円）</label>
-                        <input
-                            type="number"
-                            inputMode="numeric"
-                            className="form-input auto-filled"
-                            placeholder="家賃の1ヶ月分"
-                            value={formData.brokerFee}
-                            onChange={(e) => setFormData({...formData, brokerFee: e.target.value})}
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label className="form-label">空家賃期間（円）</label>
-                        <input
-                            type="number"
-                            inputMode="numeric"
-                            className="form-input auto-filled"
-                            placeholder="準備期間の家賃"
-                            value={formData.vacantRent}
-                            onChange={(e) => setFormData({...formData, vacantRent: e.target.value})}
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label className="form-label">火災保険（円）</label>
-                        <input
-                            type="number"
-                            inputMode="numeric"
-                            className="form-input auto-filled"
-                            placeholder="年間保険料"
-                            value={formData.insurance}
-                            onChange={(e) => setFormData({...formData, insurance: e.target.value})}
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label className="form-label">保証会社（円）</label>
-                        <input
-                            type="number"
-                            inputMode="numeric"
-                            className="form-input auto-filled"
-                            placeholder="家賃の0.5ヶ月分"
-                            value={formData.guarantee}
-                            onChange={(e) => setFormData({...formData, guarantee: e.target.value})}
-                        />
-                    </div>
-                    
-                    <div className="form-group">
-                        <label className="form-label">その他費用（円）</label>
-                        <input
-                            type="number"
-                            inputMode="numeric"
-                            className="form-input auto-filled"
-                            placeholder="鍵交換、クリーニング等"
-                            value={formData.otherCosts}
-                            onChange={(e) => setFormData({...formData, otherCosts: e.target.value})}
-                        />
-                    </div>
-                </div>
-            );
-
-            const renderStep7 = () => {
-                const totalInitialCost = formData.operationType === 'rental' ? 
-                    (parseInt(formData.deposit || 0) + 
-                     parseInt(formData.keyMoney || 0) + 
-                     parseInt(formData.brokerFee || 0) + 
-                     parseInt(formData.vacantRent || 0) + 
-                     parseInt(formData.insurance || 0) + 
-                     parseInt(formData.guarantee || 0) + 
-                     parseInt(formData.otherCosts || 0)) : 0;
-
+            const renderSummary = () => {
+                const results = calculateResults();
+                
                 return (
                     <div className="step-content">
-                        <h2 className="step-title">入力内容の確認</h2>
+                        <h2 className="step-title">入力内容確認</h2>
                         
                         <div className="summary-section">
                             <div className="summary-item">
-                                <span>地域:</span>
+                                <span>地域</span>
                                 <span>{REGIONS[formData.region]?.name}</span>
                             </div>
                             <div className="summary-item">
-                                <span>運営形態:</span>
-                                <span>{formData.operationType === 'rental' ? '転貸（賃貸物件で民泊運営）' : '購入（物件購入して民泊運営）'}</span>
+                                <span>運営形態</span>
+                                <span>{formData.operationType === 'rental' ? '転貸' : '購入'}</span>
                             </div>
                             <div className="summary-item">
-                                <span>物件タイプ:</span>
+                                <span>物件タイプ</span>
                                 <span>{formData.propertyType}</span>
                             </div>
                             <div className="summary-item">
-                                <span>面積:</span>
+                                <span>面積</span>
                                 <span>{formData.area || formData.customArea}㎡</span>
                             </div>
                             <div className="summary-item">
-                                <span>収容人数:</span>
+                                <span>民泊法</span>
+                                <span>{MINPAKU_LAWS[formData.minpakuLaw]?.name}</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>収容人数</span>
                                 <span>{formData.capacity}名</span>
                             </div>
                             <div className="summary-item">
-                                <span>民泊法:</span>
-                                <span>{MINPAKU_LAWS[formData.minpakuLaw]?.name} ({MINPAKU_LAWS[formData.minpakuLaw]?.limit})</span>
+                                <span>総投資額</span>
+                                <span>{results.totalInvestment.toLocaleString()}円</span>
                             </div>
-                            
-                            {formData.operationType === 'rental' ? (
-                                <>
-                                    <div className="summary-item">
-                                        <span>月額家賃:</span>
-                                        <span>{parseInt(formData.monthlyRent || 0).toLocaleString()}円</span>
-                                    </div>
-                                    <div className="summary-item">
-                                        <span>リノベーション費用:</span>
-                                        <span>{parseInt(formData.renovationCost || 0)}万円</span>
-                                    </div>
-                                    <div className="summary-item">
-                                        <span>初期費用合計:</span>
-                                        <span>{totalInitialCost.toLocaleString()}円</span>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="summary-item">
-                                        <span>物件購入価格:</span>
-                                        <span>{parseInt(formData.purchasePrice || 0)}万円</span>
-                                    </div>
-                                    <div className="summary-item">
-                                        <span>リノベーション費用:</span>
-                                        <span>{parseInt(formData.renovationCost || 0)}万円</span>
-                                    </div>
-                                </>
-                            )}
                         </div>
-                        
-                        <div style={{textAlign: 'center'}}>
-                            <button className="btn btn-success" onClick={handleSubmit}>
-                                結果を計算
-                            </button>
+
+                        <div className="summary-section">
+                            <h3 style={{marginBottom: '15px'}}>収益予測</h3>
+                            <div className="summary-item">
+                                <span>月間売上</span>
+                                <span>{results.monthlyRevenue.toLocaleString()}円</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>月間経費</span>
+                                <span>{results.monthlyExpenses.toLocaleString()}円</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>月間利益</span>
+                                <span>{results.monthlyProfit.toLocaleString()}円</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>年間利益</span>
+                                <span>{results.annualProfit.toLocaleString()}円</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>ROI</span>
+                                <span>{results.roi}%</span>
+                            </div>
+                            <div className="summary-item">
+                                <span>投資回収期間</span>
+                                <span>{results.recoveryPeriod}年</span>
+                            </div>
                         </div>
                     </div>
                 );
             };
 
             const renderCompletion = () => (
-                <div className="step-content">
-                    <div className="completion-message">
-                        <div className="completion-title">🎉 シミュレーション完了！</div>
-                        <div className="completion-text">
-                            詳細な結果は公式LINEで確認できます
-                        </div>
-                        
-                        <div style={{marginBottom: '30px'}}>
-                            <p><strong>結果の受け取り方法:</strong></p>
-                            <p>1. 下のボタンから公式LINEに登録</p>
-                            <p>2. LINEで「結果」とメッセージを送信</p>
-                            <p>3. 詳細なシミュレーション結果が届きます！</p>
-                        </div>
-                        
-                        <div>
-                            <a href={CONFIG.LINE_URL} target="_blank" rel="noopener noreferrer" className="line-button">
-                                📱 公式LINEに登録する
-                            </a>
-                            <button className="btn btn-primary" onClick={() => {
+                <div className="completion-message">
+                    <div className="completion-title">🎉 シミュレーション完了！</div>
+                    <div className="completion-text">
+                        シミュレーション結果を保存しました。<br/>
+                        詳細な結果はLINE公式アカウントで確認できます。
+                    </div>
+                    <a href={CONFIG.LINE_URL} className="line-button" target="_blank" rel="noopener noreferrer">
+                        LINE公式アカウントで結果を確認
+                    </a>
+                    <div style={{marginTop: '20px'}}>
+                        <button 
+                            className="btn btn-secondary"
+                            onClick={() => {
                                 setCurrentStep(1);
                                 setFormData({
                                     region: '',
@@ -1090,67 +969,107 @@
                                     guarantee: '',
                                     otherCosts: ''
                                 });
-                            }}>
-                                新しいシミュレーション
-                            </button>
-                        </div>
+                            }}
+                        >
+                            新しいシミュレーションを開始
+                        </button>
                     </div>
                 </div>
             );
+
+            const isStepValid = () => {
+                switch (currentStep) {
+                    case 1: return formData.region;
+                    case 2: return formData.operationType;
+                    case 3: return formData.propertyType;
+                    case 4: return formData.area || formData.customArea;
+                    case 5: return formData.minpakuLaw;
+                    case 6: return formData.capacity;
+                    case 7: 
+                        if (formData.operationType === 'rental') {
+                            return formData.monthlyRent && formData.renovationCost;
+                        } else {
+                            return formData.purchasePrice && formData.renovationCost;
+                        }
+                    default: return true;
+                }
+            };
+
+            if (currentStep > totalSteps) {
+                return renderCompletion();
+            }
 
             return (
                 <div className="container">
                     <div className="header">
                         <img src="logo.png" alt="有村昆の民泊塾" className="logo" />
-                        <h1 className="title">民泊シミュレーター</h1>
-                        <p className="subtitle">あなたの民泊投資を詳細にシミュレーション</p>
+                        <h1 className="title">民泊収益シミュレーター</h1>
+                        <p className="subtitle">あなたの民泊投資を数値で見える化</p>
                     </div>
 
-                    {currentStep <= totalSteps && (
-                        <div className="step-indicator">
-                            {Array.from({length: totalSteps}, (_, i) => (
-                                <div
-                                    key={i + 1}
-                                    className={`step ${
-                                        i + 1 < currentStep ? 'completed' : 
-                                        i + 1 === currentStep ? 'active' : ''
-                                    }`}
-                                >
-                                    {i + 1}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {renderStep()}
-
-                    {currentStep <= totalSteps && (
-                        <div className="navigation">
-                            <button
-                                className="btn btn-secondary"
-                                onClick={handlePrev}
-                                disabled={currentStep === 1}
+                    <div className="step-indicator">
+                        {Array.from({length: totalSteps}, (_, i) => (
+                            <div
+                                key={i + 1}
+                                className={`step ${
+                                    i + 1 < currentStep ? 'completed' : 
+                                    i + 1 === currentStep ? 'active' : ''
+                                }`}
                             >
-                                戻る
+                                {i + 1}
+                            </div>
+                        ))}
+                    </div>
+
+                    {currentStep === 1 && renderStep1()}
+                    {currentStep === 2 && renderStep2()}
+                    {currentStep === 3 && renderStep3()}
+                    {currentStep === 4 && renderStep4()}
+                    {currentStep === 5 && renderStep5()}
+                    {currentStep === 6 && renderStep6()}
+                    {currentStep === 7 && renderStep7()}
+                    {currentStep === totalSteps + 1 && renderSummary()}
+
+                    <div className="navigation">
+                        {currentStep > 1 && currentStep <= totalSteps && (
+                            <button className="btn btn-secondary" onClick={handlePrev}>
+                                前へ
                             </button>
-                            <button
-                                className="btn btn-primary"
+                        )}
+                        
+                        {currentStep < totalSteps && (
+                            <button 
+                                className="btn btn-primary" 
                                 onClick={handleNext}
-                                disabled={!isStepValid() || currentStep === totalSteps}
+                                disabled={!isStepValid()}
                             >
                                 次へ
                             </button>
-                        </div>
-                    )}
+                        )}
+                        
+                        {currentStep === totalSteps && (
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={() => setCurrentStep(totalSteps + 1)}
+                                disabled={!isStepValid()}
+                            >
+                                確認画面へ
+                            </button>
+                        )}
+                        
+                        {currentStep === totalSteps + 1 && (
+                            <button className="btn btn-success" onClick={handleSubmit}>
+                                シミュレーション実行
+                            </button>
+                        )}
+                    </div>
                 </div>
             );
         }
 
-        // アプリケーションの初期化
-        document.addEventListener('DOMContentLoaded', function() {
-            const root = ReactDOM.createRoot(document.getElementById('root'));
-            root.render(<MinpakuSimulator />);
-        });
+        // アプリケーションをレンダリング
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(MinpakuSimulator));
     </script>
 </body>
 </html>
