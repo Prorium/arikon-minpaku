@@ -266,6 +266,7 @@
             display: flex;
             justify-content: space-between;
             margin-top: 30px;
+            margin-bottom: 50px;
         }
 
         .btn {
@@ -543,14 +544,14 @@
                         timestamp: new Date().toISOString()
                     }));
 
-                    // バックエンドにも送信
+                    // バックエンドにも送信（固定ユーザーIDを使用）
                     const response = await fetch(`${CONFIG.BACKEND_URL}/api/simulation/save`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            userId: 'user_' + Date.now(),
+                            userId: 'anonymous',
                             data: formData,
                             result: simulationResult
                         })
